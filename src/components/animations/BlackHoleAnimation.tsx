@@ -80,12 +80,7 @@ export function BlackHoleAnimation({ onComplete, isActive }: BlackHoleProps) {
     let blastRadius = 0
     let blastMaxRadius = Math.max(canvas.width, canvas.height) * 1.5
 
-    const timeline = gsap.timeline({
-      onComplete: () => {
-        onComplete()
-        cleanup()
-      },
-    })
+    const timeline = gsap.timeline()
 
     // Phase 1: Black hole formation and absorption
     timeline.to({ radius: 0 }, {
@@ -130,11 +125,12 @@ export function BlackHoleAnimation({ onComplete, isActive }: BlackHoleProps) {
         blastRadius = this.targets()[0].blast
       },
       onComplete: () => {
-        // Fade out
+        // Fade out then call onComplete once
         gsap.to({}, {
           duration: 0.5,
           onComplete: () => {
             onComplete()
+            cleanup()
           }
         })
       },
@@ -562,14 +558,25 @@ interface StaggerContainerProps {
   direction?: 'up' | 'down' | 'left' | 'right'
 }
 
-export function StaggerContainer({ 
-  children, 
-  className = '', 
-  delay = 0, 
-  stagger = 0.1,
-  direction = 'up'
-}: StaggerContainerProps) {
+export const StaggerContainer = React.forwardRef<HTMLDivElement, StaggerContainerProps>(
+  ({ 
+    children, 
+    className = '', 
+    delay = 0, 
+    stagger = 0.1,
+    direction = 'up'
+  }, forwardedRef) => {
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Sync the forwarded ref
+  useEffect(() => {
+    if (!forwardedRef) return
+    if (typeof forwardedRef === 'function') {
+      forwardedRef(containerRef.current)
+    } else {
+      forwardedRef.current = containerRef.current
+    }
+  }, [forwardedRef])
 
   useEffect(() => {
     const container = containerRef.current
@@ -603,4 +610,6 @@ export function StaggerContainer({
       {children}
     </div>
   )
-}
+})
+
+StaggerContainer.displayName = 'StaggerContainer'

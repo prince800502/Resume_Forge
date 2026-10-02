@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { User, Session } from '@supabase/supabase-js'
+import { Session } from '@supabase/supabase-js'
 import { supabase } from '../services/supabase'
 import type { User as UserType } from '../types'
 
@@ -7,7 +7,7 @@ interface AuthContextType {
   user: UserType | null
   session: Session | null
   loading: boolean
-  signInWithOAuth: (provider: 'google' | 'microsoft') => Promise<void>
+  signInWithOAuth: (provider: string) => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<void>
   signUpWithEmail: (email: string, password: string, fullName: string) => Promise<void>
   signOut: () => Promise<void>
@@ -34,7 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session)
       if (session?.user) {
         await fetchUserProfile(session.user.id)
@@ -78,10 +78,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signInWithOAuth = useCallback(async (provider: 'google' | 'microsoft') => {
+  const signInWithOAuth = useCallback(async (provider: string) => {
     const redirectUrl = `${window.location.origin}/auth/callback`
     const { error } = await supabase.auth.signInWithOAuth({
-      provider,
+      provider: provider as any,
       options: {
         redirectTo: redirectUrl,
         queryParams: {

@@ -2,17 +2,29 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { gsap } from 'gsap'
 import { 
-  Plus, FileText, Search, Settings, LogOut, 
-  Download, Copy, Trash2, Edit, Eye, Star,
-  LayoutDashboard, FileCheck, Palette, BarChart2,
-  ChevronRight, Sparkles, Zap, Shield, Layers
-} from 'lucide-react'
-import { useAuth } from '../../contexts/AuthContext'
-import { useResume } from '../../contexts/ResumeContext'
-import { useTheme } from '../../contexts/ThemeContext'
-import { Button, Card, Badge, Avatar, Modal, Toggle, Input } from '../ui'
-import { FloatingParticles, MorphingBlobs, PageTransition, StaggerContainer } from '../animations/BlackHoleAnimation'
-import { BlackHoleAnimation } from '../animations/BlackHoleAnimation'
+  PlusIcon, DocumentTextIcon, MagnifyingGlassIcon, Cog6ToothIcon, ArrowRightOnRectangleIcon,
+  ArrowDownTrayIcon, DocumentDuplicateIcon, TrashIcon, PencilIcon, EyeIcon, StarIcon,
+  Squares2X2Icon, DocumentCheckIcon, PaintBrushIcon, ChartBarIcon, SquaresPlusIcon,
+  ChevronRightIcon, SparklesIcon, BoltIcon, ShieldCheckIcon, CubeIcon
+} from '@heroicons/react/24/outline'
+import { 
+  PlusIcon as PlusIconSolid, DocumentTextIcon as DocumentTextIconSolid,
+  MagnifyingGlassIcon as MagnifyingGlassIconSolid, Cog6ToothIcon as Cog6ToothIconSolid,
+  ArrowRightOnRectangleIcon as ArrowRightOnRectangleIconSolid,
+  ArrowDownTrayIcon as ArrowDownTrayIconSolid, DocumentDuplicateIcon as DocumentDuplicateIconSolid,
+  TrashIcon as TrashIconSolid, PencilIcon as PencilIconSolid, EyeIcon as EyeIconSolid,
+  StarIcon as StarIconSolid, Squares2X2Icon as Squares2X2IconSolid,
+  DocumentCheckIcon as DocumentCheckIconSolid, PaintBrushIcon as PaintBrushIconSolid,
+  ChartBarIcon as ChartBarIconSolid, SquaresPlusIcon as SquaresPlusIconSolid,
+  ChevronRightIcon as ChevronRightIconSolid, SparklesIcon as SparklesIconSolid,
+  BoltIcon as BoltIconSolid, ShieldCheckIcon as ShieldCheckIconSolid, CubeIcon as CubeIconSolid
+} from '@heroicons/react/24/solid'
+import { useAuth } from '@/contexts/AuthContext'
+import { useResume } from '@/contexts/ResumeContext'
+import { useTheme } from '@/contexts/ThemeContext'
+import { Button, Card, Badge, Avatar, Modal, Toggle, Input, Divider } from '@/components/ui'
+import { FloatingParticles, MorphingBlobs, PageTransition, StaggerContainer } from '@/components/animations/BlackHoleAnimation'
+import { BlackHoleAnimation } from '@/components/animations/BlackHoleAnimation'
 import toast from 'react-hot-toast'
 
 const templates = [
@@ -73,17 +85,17 @@ const templates = [
 ]
 
 const features = [
-  { icon: Sparkles, title: 'AI-Powered Suggestions', desc: 'Smart content recommendations tailored to your role' },
-  { icon: Zap, title: 'Live Preview', desc: 'See changes instantly as you type' },
-  { icon: Shield, title: 'ATS Optimized', desc: 'Templates designed to pass applicant tracking systems' },
-  { icon: Layers, title: 'Multiple Templates', desc: 'Choose from professional, creative, and modern designs' },
-  { icon: BarChart2, title: 'ATS Score Checker', desc: 'Analyze your resume against job descriptions' },
-  { icon: Palette, title: 'Custom Themes', desc: 'Personalize colors, fonts, and layouts' },
+  { icon: SparklesIconSolid, title: 'AI-Powered Suggestions', desc: 'Smart content recommendations tailored to your role' },
+  { icon: BoltIconSolid, title: 'Live Preview', desc: 'See changes instantly as you type' },
+  { icon: ShieldCheckIconSolid, title: 'ATS Optimized', desc: 'Templates designed to pass applicant tracking systems' },
+  { icon: CubeIconSolid, title: 'Multiple Templates', desc: 'Choose from professional, creative, and modern designs' },
+  { icon: ChartBarIconSolid, title: 'ATS Score Checker', desc: 'Analyze your resume against job descriptions' },
+  { icon: PaintBrushIconSolid, title: 'Custom Themes', desc: 'Personalize colors, fonts, and layouts' },
 ]
 
 export function DashboardPage() {
   const navigate = useNavigate()
-  const { user, signOut, session } = useAuth()
+  const { user, signOut } = useAuth()
   const { resumes, currentResume, createResume, setCurrentResume, deleteResume, duplicateResume, loading: resumeLoading } = useResume()
   const { theme, toggleTheme, resolvedTheme } = useTheme()
   
@@ -99,7 +111,6 @@ export function DashboardPage() {
   const cardsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    // Animate entrance
     const tl = gsap.timeline()
     
     tl.fromTo(sidebarRef.current, 
@@ -113,16 +124,17 @@ export function DashboardPage() {
       '-=0.4'
     )
     
-    tl.fromTo(cardsRef.current?.children, 
-      { y: 30, opacity: 0 }, 
-      { y: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: 'power3.out' }, 
-      '-=0.3'
-    )
+    if (cardsRef.current) {
+      tl.fromTo(Array.from(cardsRef.current.children), 
+        { y: 30, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.5, stagger: 0.1, ease: 'power3.out' }, 
+        '-=0.3'
+      )
+    }
   }, [])
 
   const handleSignOut = () => {
     setShowBlackHole(true)
-    // The BlackHoleAnimation will call onComplete which signs out
   }
 
   const handleBlackHoleComplete = async () => {
@@ -179,9 +191,9 @@ export function DashboardPage() {
     navigate(`/preview/${id}`)
   }
 
-  const filteredResumes = resumes.filter(r => {
-    if (filter === 'recent') return true // Could add date filtering
-    if (filter === 'favorites') return false // Could add favorite field
+  const filteredResumes = resumes.filter((_r) => {
+    if (filter === 'recent') return true
+    if (filter === 'favorites') return false
     return true
   })
 
@@ -205,7 +217,7 @@ export function DashboardPage() {
         <div className="p-6 border-b border-[var(--card-border)]">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cosmic-500 to-nebula-500 flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
+              <SparklesIconSolid className="w-6 h-6 text-white" />
             </div>
             <div>
               <h1 className="font-bold text-lg bg-gradient-to-r from-cosmic-400 to-nebula-400 bg-clip-text text-transparent">ResumeForge</h1>
@@ -219,7 +231,7 @@ export function DashboardPage() {
             variant="primary"
             fullWidth
             onClick={() => setShowCreateModal(true)}
-            leftIcon={<Plus className="w-4 h-4" />}
+            leftIcon={<PlusIconSolid className="w-4 h-4" />}
             className="justify-start gap-3"
           >
             <span>New Resume</span>
@@ -233,7 +245,7 @@ export function DashboardPage() {
               variant={filter === 'all' ? 'primary' : 'ghost'}
               fullWidth
               onClick={() => setFilter('all')}
-              leftIcon={<LayoutDashboard className="w-4 h-4" />}
+              leftIcon={<Squares2X2IconSolid className="w-4 h-4" />}
               className="justify-start gap-3"
             >
               All Resumes
@@ -243,7 +255,7 @@ export function DashboardPage() {
               variant={filter === 'recent' ? 'primary' : 'ghost'}
               fullWidth
               onClick={() => setFilter('recent')}
-              leftIcon={<FileText className="w-4 h-4" />}
+              leftIcon={<DocumentTextIconSolid className="w-4 h-4" />}
               className="justify-start gap-3"
             >
               Recent
@@ -253,7 +265,7 @@ export function DashboardPage() {
               variant={filter === 'favorites' ? 'primary' : 'ghost'}
               fullWidth
               onClick={() => setFilter('favorites')}
-              leftIcon={<Star className="w-4 h-4" />}
+              leftIcon={<StarIconSolid className="w-4 h-4" />}
               className="justify-start gap-3"
             >
               Favorites
@@ -267,7 +279,7 @@ export function DashboardPage() {
             variant="ghost"
             fullWidth
             onClick={() => navigate('/ats-checker')}
-            leftIcon={<FileCheck className="w-4 h-4" />}
+            leftIcon={<DocumentCheckIconSolid className="w-4 h-4" />}
             className="justify-start gap-3"
           >
             ATS Checker
@@ -278,7 +290,7 @@ export function DashboardPage() {
             variant="ghost"
             fullWidth
             onClick={() => setShowSettingsModal(true)}
-            leftIcon={<Settings className="w-4 h-4" />}
+            leftIcon={<Cog6ToothIconSolid className="w-4 h-4" />}
             className="justify-start gap-3"
           >
             Settings
@@ -302,7 +314,7 @@ export function DashboardPage() {
             variant="ghost"
             fullWidth
             onClick={handleSignOut}
-            leftIcon={<LogOut className="w-4 h-4" />}
+            leftIcon={<ArrowRightOnRectangleIconSolid className="w-4 h-4" />}
             className="mt-4 justify-start gap-3 text-red-400 hover:bg-red-500/10"
           >
             Sign Out
@@ -334,7 +346,7 @@ export function DashboardPage() {
               description={resolvedTheme === 'dark' ? 'Dark mode' : 'Light mode'}
             />
             <Button variant="ghost" size="sm" onClick={handleSignOut} disabled={resumeLoading}>
-              <LogOut className="w-4 h-4" />
+              <ArrowRightOnRectangleIconSolid className="w-4 h-4" />
             </Button>
           </div>
         </header>
@@ -342,88 +354,23 @@ export function DashboardPage() {
         {/* Content */}
         <div className="flex-1 p-6 overflow-y-auto">
           {resumes.length === 0 ? (
-            {/* Empty State */}
-            <PageTransition>
-              <Card variant="glass" padding="xl" className="max-w-2xl mx-auto text-center">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cosmic-500/20 to-nebula-500/20 flex items-center justify-center mx-auto mb-6">
-                  <FileText className="w-10 h-10 text-cosmic-500" />
-                </div>
-                <h3 className="text-2xl font-bold mb-2">No Resumes Yet</h3>
-                <p className="text-[var(--muted-foreground)] mb-6">
-                  Start building your professional resume with our AI-powered templates and live preview.
-                </p>
-                <div className="flex gap-4 justify-center">
-                  <Button 
-                    variant="primary" 
-                    size="lg" 
-                    onClick={() => setShowCreateModal(true)}
-                    leftIcon={<Plus className="w-4 h-4" />}
-                  >
-                    Create Your First Resume
-                  </Button>
-                  <Button 
-                    variant="secondary" 
-                    size="lg" 
-                    onClick={() => navigate('/ats-checker')}
-                    leftIcon={<FileCheck className="w-4 h-4" />}
-                  >
-                    Try ATS Checker
-                  </Button>
-                </div>
-
-                <Divider label="Key Features" className="my-8" />
-
-                <StaggerContainer stagger={0.1} direction="up">
-                  <div className="grid md:grid-cols-3 gap-4 text-left">
-                    {features.map((feature, i) => (
-                      <Card key={i} variant="hover" padding="md" className="group">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cosmic-500/20 to-nebula-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                          <feature.icon className="w-5 h-5 text-cosmic-500" />
-                        </div>
-                        <h4 className="font-semibold mb-1">{feature.title}</h4>
-                        <p className="text-sm text-[var(--muted-foreground)]">{feature.desc}</p>
-                      </Card>
-                    ))}
-                  </div>
-                </StaggerContainer>
-              </Card>
-            </PageTransition>
+            <EmptyState 
+              onCreateClick={() => setShowCreateModal(true)} 
+              onAtsClick={() => navigate('/ats-checker')} 
+            />
           ) : (
-            {/* Resume Grid */}
-            <>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold">Your Resumes</h3>
-                  <p className="text-sm text-[var(--muted-foreground)]">
-                    {filteredResumes.length} resume{filteredResumes.length !== 1 ? 's' : ''} found
-                  </p>
-                </div>
-                <Button variant="secondary" onClick={() => setShowCreateModal(true)} leftIcon={<Plus className="w-4 h-4" />}>
-                  New Resume
-                </Button>
-              </div>
-
-              <PageTransition>
-                <StaggerContainer ref={cardsRef} stagger={0.08} direction="up">
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {filteredResumes.map((resume, index) => (
-                      <ResumeCard
-                        key={resume.id}
-                        resume={resume}
-                        template={templates.find(t => t.id === resume.template_id)}
-                        isCurrent={currentResume?.id === resume.id}
-                        onEdit={() => handleEditResume(resume.id)}
-                        onDuplicate={() => handleDuplicateResume(resume.id)}
-                        onDelete={() => handleDeleteResume(resume.id)}
-                        onView={() => handleViewResume(resume.id)}
-                        onSelect={() => setCurrentResume(resume)}
-                        index={index}
-                      />
-                    ))}
-                  </div>
-                </StaggerContainer>
-              </PageTransition>
-            </>
+            <ResumeGrid
+              resumes={filteredResumes}
+              currentResume={currentResume}
+              templates={templates}
+              cardsRef={cardsRef}
+              onEdit={handleEditResume}
+              onDuplicate={handleDuplicateResume}
+              onDelete={handleDeleteResume}
+              onView={handleViewResume}
+              onSelect={setCurrentResume}
+              onCreateClick={() => setShowCreateModal(true)}
+            />
           )}
         </div>
       </main>
@@ -441,7 +388,7 @@ export function DashboardPage() {
             label="Resume Title"
             placeholder="e.g., Senior Software Engineer Resume"
             value={newResumeTitle}
-            onChange={e => setNewResumeTitle(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewResumeTitle(e.target.value)}
             autoFocus
           />
 
@@ -465,7 +412,7 @@ export function DashboardPage() {
             </Button>
             <Button variant="primary" onClick={handleCreateResume} disabled={!newResumeTitle.trim()}>
               Create Resume
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRightIconSolid className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -512,10 +459,10 @@ export function DashboardPage() {
           <div>
             <h4 className="font-medium mb-4">Data & Privacy</h4>
             <div className="space-y-3">
-              <Button variant="ghost" fullWidth className="justify-start" leftIcon={<Download className="w-4 h-4" />}>
+              <Button variant="ghost" fullWidth className="justify-start" leftIcon={<ArrowDownTrayIconSolid className="w-4 h-4" />}>
                 Export All Data
               </Button>
-              <Button variant="ghost" fullWidth className="justify-start text-red-400 hover:bg-red-500/10" leftIcon={<Trash2 className="w-4 h-4" />}>
+              <Button variant="ghost" fullWidth className="justify-start text-red-400 hover:bg-red-500/10" leftIcon={<TrashIconSolid className="w-4 h-4" />}>
                 Delete Account
               </Button>
             </div>
@@ -531,6 +478,126 @@ export function DashboardPage() {
         </div>
       </Modal>
     </div>
+  )
+}
+
+// Empty State Component
+interface EmptyStateProps {
+  onCreateClick: () => void
+  onAtsClick: () => void
+}
+
+function EmptyState({ onCreateClick, onAtsClick }: EmptyStateProps) {
+  return (
+    <PageTransition>
+      <Card variant="glass" padding="lg" className="max-w-2xl mx-auto text-center">
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cosmic-500/20 to-nebula-500/20 flex items-center justify-center mx-auto mb-6">
+          <DocumentTextIconSolid className="w-10 h-10 text-cosmic-500" />
+        </div>
+        <h3 className="text-2xl font-bold mb-2">No Resumes Yet</h3>
+        <p className="text-[var(--muted-foreground)] mb-6">
+          Start building your professional resume with our AI-powered templates and live preview.
+        </p>
+        <div className="flex gap-4 justify-center">
+          <Button 
+            variant="primary" 
+            size="lg" 
+            onClick={onCreateClick}
+            leftIcon={<PlusIconSolid className="w-4 h-4" />}
+          >
+            Create Your First Resume
+          </Button>
+          <Button 
+            variant="secondary" 
+            size="lg" 
+            onClick={onAtsClick}
+            leftIcon={<DocumentCheckIconSolid className="w-4 h-4" />}
+          >
+            Try ATS Checker
+          </Button>
+        </div>
+
+        <Divider label="Key Features" className="my-8" />
+
+        <StaggerContainer stagger={0.1} direction="up">
+          <div className="grid md:grid-cols-3 gap-4 text-left">
+            {features.map((feature, i) => (
+              <Card key={i} variant="hover" padding="md" className="group">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cosmic-500/20 to-nebula-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                  <feature.icon className="w-5 h-5 text-cosmic-500" />
+                </div>
+                <h4 className="font-semibold mb-1">{feature.title}</h4>
+                <p className="text-sm text-[var(--muted-foreground)]">{feature.desc}</p>
+              </Card>
+            ))}
+          </div>
+        </StaggerContainer>
+      </Card>
+    </PageTransition>
+  )
+}
+
+// Resume Grid Component
+interface ResumeGridProps {
+  resumes: any[]
+  currentResume: any
+  templates: any[]
+  cardsRef: React.RefObject<HTMLDivElement>
+  onEdit: (id: string) => void
+  onDuplicate: (id: string) => void
+  onDelete: (id: string) => void
+  onView: (id: string) => void
+  onSelect: (resume: any) => void
+  onCreateClick: () => void
+}
+
+function ResumeGrid({ 
+  resumes, 
+  currentResume, 
+  templates, 
+  cardsRef, 
+  onEdit, 
+  onDuplicate, 
+  onDelete, 
+  onView, 
+  onSelect, 
+  onCreateClick 
+}: ResumeGridProps) {
+  return (
+    <>
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="text-lg font-semibold">Your Resumes</h3>
+          <p className="text-sm text-[var(--muted-foreground)]">
+            {resumes.length} resume{resumes.length !== 1 ? 's' : ''} found
+          </p>
+        </div>
+        <Button variant="secondary" onClick={onCreateClick} leftIcon={<PlusIconSolid className="w-4 h-4" />}>
+          New Resume
+        </Button>
+      </div>
+
+      <PageTransition>
+        <StaggerContainer ref={cardsRef} stagger={0.08} direction="up">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {resumes.map((resume, index) => (
+              <ResumeCard
+                key={resume.id}
+                resume={resume}
+                template={templates.find(t => t.id === resume.template_id)}
+                isCurrent={currentResume?.id === resume.id}
+                onEdit={() => onEdit(resume.id)}
+                onDuplicate={() => onDuplicate(resume.id)}
+                onDelete={() => onDelete(resume.id)}
+                onView={() => onView(resume.id)}
+                onSelect={() => onSelect(resume)}
+                index={index}
+              />
+            ))}
+          </div>
+        </StaggerContainer>
+      </PageTransition>
+    </>
   )
 }
 
@@ -593,12 +660,12 @@ function ResumeCard({ resume, template, isCurrent, onEdit, onDuplicate, onDelete
 
         <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)] mb-4">
           <span className="flex items-center gap-1">
-            <FileText className="w-3 h-3" />
+            <DocumentTextIconSolid className="w-3 h-3" />
             Updated {new Date(resume.updated_at).toLocaleDateString()}
           </span>
           {resume.ats_score && (
             <span className="flex items-center gap-1">
-              <BarChart2 className="w-3 h-3" />
+              <ChartBarIconSolid className="w-3 h-3" />
               ATS: {resume.ats_score}%
             </span>
           )}
@@ -609,16 +676,16 @@ function ResumeCard({ resume, template, isCurrent, onEdit, onDuplicate, onDelete
             variant={isCurrent ? 'primary' : 'secondary'} 
             size="sm" 
             fullWidth
-            onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            leftIcon={<Edit className="w-3 h-3" />}
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); onEdit(); }}
+            leftIcon={<PencilIconSolid className="w-3 h-3" />}
           >
             Edit
           </Button>
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={(e) => { e.stopPropagation(); onView(); }}
-            leftIcon={<Eye className="w-3 h-3" />}
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); onView(); }}
+            leftIcon={<EyeIconSolid className="w-3 h-3" />}
           >
             View
           </Button>
@@ -629,8 +696,8 @@ function ResumeCard({ resume, template, isCurrent, onEdit, onDuplicate, onDelete
             variant="ghost" 
             size="sm" 
             fullWidth
-            onClick={(e) => { e.stopPropagation(); onDuplicate(); }}
-            leftIcon={<Copy className="w-3 h-3" />}
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); onDuplicate(); }}
+            leftIcon={<DocumentDuplicateIconSolid className="w-3 h-3" />}
           >
             Duplicate
           </Button>
@@ -638,8 +705,8 @@ function ResumeCard({ resume, template, isCurrent, onEdit, onDuplicate, onDelete
             variant="ghost" 
             size="sm" 
             fullWidth
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            leftIcon={<Trash2 className="w-3 h-3" />}
+            onClick={(e: React.MouseEvent<HTMLButtonElement>) => { e.stopPropagation(); onDelete(); }}
+            leftIcon={<TrashIconSolid className="w-3 h-3" />}
             className="text-red-400 hover:bg-red-500/10"
           >
             Delete
@@ -678,7 +745,7 @@ function TemplateCard({ template, isSelected, onSelect }: TemplateCardProps) {
       
       <div className="w-12 h-16 rounded-lg mb-3 flex items-center justify-center" 
         style={{ background: template.colors.primary, border: `2px solid ${template.colors.accent}` }}>
-        <FileText className="w-6 h-6" style={{ color: template.colors.background }} />
+        <DocumentTextIconSolid className="w-6 h-6" style={{ color: template.colors.background }} />
       </div>
       
       <h5 className="font-semibold mb-1" style={{ color: template.colors.heading }}>{template.name}</h5>

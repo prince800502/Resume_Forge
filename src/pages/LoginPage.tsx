@@ -1,21 +1,25 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { useNavigate, Navigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { gsap } from 'gsap'
 import { 
-  Mail, Lock, Eye, EyeOff, Loader2, 
-  Github, Linkedin, Twitter, Sun, Moon,
-  ChevronRight, Sparkles
-} from 'lucide-react'
-import { useAuth } from '../../contexts/AuthContext'
-import { useTheme } from '../../contexts/ThemeContext'
-import { Button, Input, Card, Badge, Toggle } from '../ui'
-import { FloatingParticles, MorphingBlobs, PageTransition, StaggerContainer } from '../animations/BlackHoleAnimation'
+  EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon,
+  ArrowRightIcon, SparklesIcon
+} from '@heroicons/react/24/outline'
+import { 
+  EnvelopeIcon as EnvelopeIconSolid, LockClosedIcon as LockClosedIconSolid,
+  EyeIcon as EyeIconSolid, EyeSlashIcon as EyeSlashIconSolid,
+  ArrowRightIcon as ArrowRightIconSolid, SparklesIcon as SparklesIconSolid
+} from '@heroicons/react/24/solid'
+import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/contexts/ThemeContext'
+import { Button, Input, Card, Badge, Toggle, Divider } from '@/components/ui'
+import { FloatingParticles, MorphingBlobs, PageTransition } from '@/components/animations/BlackHoleAnimation'
 import toast from 'react-hot-toast'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const { signInWithOAuth, signInWithEmail, signUpWithEmail, continueAsGuest, loading: authLoading, user } = useAuth()
-  const { theme, toggleTheme, resolvedTheme } = useTheme()
+  const { toggleTheme, resolvedTheme } = useTheme()
   
   const [isSignUp, setIsSignUp] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -44,7 +48,6 @@ export function LoginPage() {
     const form = formRef.current
     if (!container || !form) return
 
-    // Initial animations
     gsap.fromTo(container, 
       { opacity: 0 }, 
       { opacity: 1, duration: 1, ease: 'power3.out' }
@@ -55,7 +58,6 @@ export function LoginPage() {
       { opacity: 1, y: 0, scale: 1, duration: 1, delay: 0.3, ease: 'power3.out' }
     )
 
-    // Animate particles container
     gsap.fromTo(particlesRef.current, 
       { opacity: 0 }, 
       { opacity: 1, duration: 1.5, delay: 0.5, ease: 'power2.out' }
@@ -90,7 +92,7 @@ export function LoginPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     
     if (!validateForm()) return
@@ -142,7 +144,6 @@ export function LoginPage() {
     setErrors({})
     setFormData({ email: '', password: '', confirmPassword: '', fullName: '' })
     
-    // Animate form transition
     const form = formRef.current
     if (form) {
       gsap.to(form, { opacity: 0, y: 20, duration: 0.2, ease: 'power2.in', onComplete: () => {
@@ -162,7 +163,6 @@ export function LoginPage() {
         <MorphingBlobs />
         <FloatingParticles count={80} />
         
-        {/* Cosmic gradient orbs */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-gradient-to-br from-cosmic-500/20 via-transparent to-nebula-500/20 blur-3xl animate-float" />
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-gradient-to-br from-nebula-500/20 via-transparent to-cyan-500/20 blur-3xl animate-float" style={{ animationDelay: '-3s' }} />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-72 h-72 rounded-full bg-gradient-to-r from-cosmic-500/10 to-nebula-500/10 blur-3xl animate-pulse-slow" />
@@ -183,7 +183,7 @@ export function LoginPage() {
         <Card ref={formRef} variant="glass" padding="lg" className="w-full max-w-md relative z-10">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cosmic-500 to-nebula-500 mb-4 animate-float">
-              <Sparkles className="w-8 h-8 text-white" />
+              <SparklesIconSolid className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-cosmic-600 via-nebula-600 to-cosmic-600 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
               ResumeForge
@@ -200,9 +200,9 @@ export function LoginPage() {
                 type="text"
                 placeholder="John Doe"
                 value={formData.fullName}
-                onChange={e => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
                 error={errors.fullName}
-                leftIcon={<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>}
+                leftIcon={<EnvelopeIconSolid className="w-5 h-5" />}
                 autoComplete="name"
                 autoFocus
               />
@@ -213,9 +213,9 @@ export function LoginPage() {
               type="email"
               placeholder="you@example.com"
               value={formData.email}
-              onChange={e => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, email: e.target.value }))}
               error={errors.email}
-              leftIcon={<Mail className="w-5 h-5" />}
+              leftIcon={<EnvelopeIcon className="w-5 h-5" />}
               autoComplete="email"
               autoFocus={!isSignUp}
             />
@@ -225,9 +225,9 @@ export function LoginPage() {
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               value={formData.password}
-              onChange={e => setFormData(prev => ({ ...prev, password: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, password: e.target.value }))}
               error={errors.password}
-              leftIcon={<Lock className="w-5 h-5" />}
+              leftIcon={<LockClosedIcon className="w-5 h-5" />}
               rightIcon={
                 <button
                   type="button"
@@ -235,7 +235,7 @@ export function LoginPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                 </button>
               }
               autoComplete={isSignUp ? 'new-password' : 'current-password'}
@@ -247,9 +247,9 @@ export function LoginPage() {
                 type={showConfirmPassword ? 'text' : 'password'}
                 placeholder="••••••••"
                 value={formData.confirmPassword}
-                onChange={e => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                 error={errors.confirmPassword}
-                leftIcon={<Lock className="w-5 h-5" />}
+                leftIcon={<LockClosedIcon className="w-5 h-5" />}
                 rightIcon={
                   <button
                     type="button"
@@ -257,7 +257,7 @@ export function LoginPage() {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   >
-                    {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showConfirmPassword ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                   </button>
                 }
                 autoComplete="new-password"
@@ -266,7 +266,7 @@ export function LoginPage() {
 
             <Button type="submit" variant="primary" size="lg" fullWidth loading={submitting || authLoading} className="mt-2">
               {isSignUp ? 'Create Account' : 'Sign In'}
-              <ChevronRight className="w-4 h-4" />
+              <ArrowRightIconSolid className="w-4 h-4" />
             </Button>
           </form>
 

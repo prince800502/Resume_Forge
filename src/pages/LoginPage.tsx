@@ -155,7 +155,7 @@ export function LoginPage() {
   return (
     <div 
       ref={containerRef}
-      className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden"
+      className="min-h-screen relative flex items-center justify-center px-3 py-6 sm:p-6 lg:p-8 overflow-hidden"
       style={{ background: 'var(--background)' }}
     >
       {/* Animated Background */}
@@ -169,7 +169,7 @@ export function LoginPage() {
       </div>
 
       {/* Theme Toggle */}
-      <div className="absolute top-6 right-6 z-10">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-10">
         <Toggle
           checked={resolvedTheme === 'dark'}
           onChange={toggleTheme}
@@ -180,7 +180,45 @@ export function LoginPage() {
 
       {/* Main Card */}
       <PageTransition>
-        <Card ref={formRef} variant="glass" padding="lg" className="w-full max-w-md relative z-10">
+        <Card
+          ref={formRef}
+          variant="glass"
+          padding="lg"
+          className="w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-4xl xl:max-w-6xl relative z-10"
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] xl:grid-cols-2 gap-8 lg:gap-10 xl:gap-14 items-center">
+            {/* Desktop / laptop branding panel */}
+            <div className="hidden lg:flex flex-col justify-center min-h-[520px] rounded-3xl p-8 xl:p-10 bg-gradient-to-br from-cosmic-500/10 via-transparent to-nebula-500/10 border border-[var(--border)]">
+              <div className="w-16 h-16 xl:w-20 xl:h-20 rounded-2xl bg-gradient-to-br from-cosmic-500 to-nebula-500 flex items-center justify-center mb-6 animate-float">
+                <SparklesIconSolid className="w-8 h-8 xl:w-10 xl:h-10 text-white" />
+              </div>
+
+              <h2 className="text-3xl xl:text-4xl font-bold bg-gradient-to-r from-cosmic-500 via-nebula-500 to-cosmic-500 bg-clip-text text-transparent">
+                Build a Resume That Stands Out
+              </h2>
+
+              <p className="mt-4 text-base xl:text-lg text-[var(--muted-foreground)] leading-relaxed">
+                Create professional, ATS-friendly resumes with live preview, multiple templates, and a smooth editing experience.
+              </p>
+
+              <div className="mt-8 space-y-4">
+                <div className="flex items-center gap-3">
+                  <Badge variant="cosmic" size="sm">ATS Optimized</Badge>
+                  <span className="text-sm text-[var(--muted-foreground)]">Recruiter-friendly formatting</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="success" size="sm">Live Preview</Badge>
+                  <span className="text-sm text-[var(--muted-foreground)]">See changes instantly</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="info" size="sm">Multiple Templates</Badge>
+                  <span className="text-sm text-[var(--muted-foreground)]">Choose your perfect style</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Login / signup form */}
+            <div className="w-full min-w-0">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cosmic-500 to-nebula-500 mb-4 animate-float">
               <SparklesIconSolid className="w-8 h-8 text-white" />
@@ -338,11 +376,13 @@ export function LoginPage() {
               <a href="#" className="text-cosmic-500 hover:text-cosmic-400 transition-colors">Privacy Policy</a>
             </div>
           </div>
+            </div>
+          </div>
         </Card>
       </PageTransition>
 
       {/* Feature highlights */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-8 z-10" style={{ opacity: 0.6 }}>
+      <div className="hidden lg:flex absolute bottom-8 left-1/2 -translate-x-1/2 gap-6 xl:gap-8 z-10" style={{ opacity: 0.6 }}>
         <div className="flex items-center gap-2 text-[var(--muted-foreground)]">
           <Badge variant="cosmic" size="sm">ATS Optimized</Badge>
         </div>

@@ -3,12 +3,19 @@ import { Resume, ResumeData, PersonalInfo, Experience, Education, Skill, Project
 import { supabase } from '../services/supabase'
 import { useAuth } from './AuthContext'
 
+const STORAGE_KEY = 'resumeforge_guest_resumes'
+const CURRENT_RESUME_KEY = 'resumeforge_current_resume_id'
+
 interface ResumeContextType {
   resumes: Resume[]
   currentResume: Resume | null
   loading: boolean
   createResume: (title?: string, templateId?: string) => Promise<Resume>
-  updateResume: (id: string, data: Partial<Resume>) => Promise<void>
+  updateResume: (
+    id: string,
+    data: Partial<Resume>,
+    options?: { persist?: boolean }
+  ) => Promise<void>
   deleteResume: (id: string) => Promise<void>
   setCurrentResume: (resume: Resume | null) => void
   updateResumeData: (data: Partial<ResumeData>) => Promise<void>
@@ -67,90 +74,248 @@ const defaultResumeData: ResumeData = {
 
 const generateId = () => `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
+// Load guest resumes from localStorage
+const loadGuestResumes = (): Resume[] => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      if (Array.isArray(parsed)) return parsed
+    }
+  } catch (e) {
+    console.error('Failed to load guest resumes from localStorage:', e)
+  }
+  return []
+}
+
+// Save guest resumes to localStorage
+const saveGuestResumes = (resumes: Resume[]) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(resumes))
+  } catch (e) {
+    console.error('Failed to save guest resumes to localStorage:', e)
+  }
+}
+
+// Load current resume ID from localStorage
+const loadCurrentResumeId = (): string | null => {
+  try {
+    return localStorage.getItem(CURRENT_RESUME_KEY)
+  } catch (e) {
+    console.error('Failed to load current resume ID:', e)
+    return null
+  }
+}
+
+// Save current resume ID to localStorage
+const saveCurrentResumeId = (id: string | null) => {
+  try {
+    if (id) {
+      localStorage.setItem(CURRENT_RESUME_KEY, id)
+    } else {
+      localStorage.removeItem(CURRENT_RESUME_KEY)
+    }
+  } catch (e) {
+    console.error('Failed to save current resume ID:', e)
+  }
+}
+
 export function ResumeProvider({ children }: { children: React.ReactNode }) {
   const { user, session } = useAuth()
   const [resumes, setResumes] = useState<Resume[]>([])
-  const [currentResume, setCurrentResume] = useState<Resume | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [currentResume, setCurrentResumeState] = useState<Resume | null>(null)
+  const [loading, setLoading] = useState(true)
 
-  const fetchResumes = useCallback(async () => {
-    if (!user || user.provider === 'guest') return
-    
-    setLoading(true)
-    try {
-      const { data, error } = await supabase
-        .from('resumes')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
+  // Initialize: load from localStorage for guests, or from Supabase for authenticated users
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true)
+      try {
+        if (user && user.provider !== 'guest') {
+          // Authenticated user - load from Supabase
+          const { data, error } = await supabase
+            .from('resumes')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('updated_at', { ascending: false })
 
-      if (error) throw error
-      setResumes(data || [])
-    } catch (error) {
-      console.error('Error fetching resumes:', error)
-    } finally {
-      setLoading(false)
+          if (error) throw error
+          const loadedResumes = data || []
+          setResumes(loadedResumes)
+
+          // Restore current resume from localStorage if available, otherwise use first
+          const savedCurrentId = loadCurrentResumeId()
+          if (savedCurrentId) {
+            const found = loadedResumes.find(r => r.id === savedCurrentId)
+            if (found) {
+              setCurrentResumeState(found)
+            } else if (loadedResumes.length > 0) {
+              setCurrentResumeState(loadedResumes[0])
+              saveCurrentResumeId(loadedResumes[0].id)
+            }
+          } else if (loadedResumes.length > 0) {
+            setCurrentResumeState(loadedResumes[0])
+            saveCurrentResumeId(loadedResumes[0].id)
+          }
+        } else {
+          // Guest user - load from localStorage
+          const guestResumes = loadGuestResumes()
+          setResumes(guestResumes)
+
+          const savedCurrentId = loadCurrentResumeId()
+          if (savedCurrentId) {
+            const found = guestResumes.find(r => r.id === savedCurrentId)
+            if (found) {
+              setCurrentResumeState(found)
+            } else if (guestResumes.length > 0) {
+              setCurrentResumeState(guestResumes[0])
+              saveCurrentResumeId(guestResumes[0].id)
+            }
+          } else if (guestResumes.length > 0) {
+            setCurrentResumeState(guestResumes[0])
+            saveCurrentResumeId(guestResumes[0].id)
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing resumes:', error)
+      } finally {
+        setLoading(false)
+      }
     }
+
+    init()
   }, [user])
 
+  // Listen for auth changes (for Supabase session changes)
   useEffect(() => {
-    fetchResumes()
-  }, [fetchResumes])
+    if (!user || user.provider === 'guest') return
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        const { data, error } = await supabase
+          .from('resumes')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('updated_at', { ascending: false })
+
+        if (!error) {
+          setResumes(data || [])
+          // Try to restore current resume
+          const savedCurrentId = loadCurrentResumeId()
+          if (savedCurrentId) {
+            const found = data?.find(r => r.id === savedCurrentId)
+            if (found) setCurrentResumeState(found)
+          } else if (data?.length > 0) {
+            setCurrentResumeState(data[0])
+            saveCurrentResumeId(data[0].id)
+          }
+        }
+      } else {
+        setResumes([])
+        setCurrentResumeState(null)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [user])
+
+  // Persist guest resumes to localStorage whenever they change
+  useEffect(() => {
+    if (user?.provider === 'guest') {
+      saveGuestResumes(resumes)
+    }
+  }, [resumes, user])
+
+  // Persist current resume ID
+  useEffect(() => {
+    if (currentResume) {
+      saveCurrentResumeId(currentResume.id)
+    }
+  }, [currentResume])
 
   const createResume = useCallback(async (title = 'Untitled Resume', templateId = 'modern-1'): Promise<Resume> => {
-    if (!user || user.provider === 'guest') {
-      // Create local resume for guest
-      const newResume: Resume = {
-        id: generateId(),
-        user_id: user?.id || 'guest',
-        title,
-        template_id: templateId,
-        data: defaultResumeData,
-        is_public: false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }
-      setResumes(prev => [newResume, ...prev])
-      setCurrentResume(newResume)
-      return newResume
+    const newResume: Resume = {
+      id: generateId(),
+      user_id: user?.id || 'guest',
+      title,
+      template_id: templateId,
+      data: defaultResumeData,
+      is_public: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     }
 
-    const { data, error } = await supabase
-      .from('resumes')
-      .insert({
-        user_id: user.id,
-        title,
-        template_id: templateId,
-        data: defaultResumeData,
-        is_public: false,
-      })
-      .select()
-      .single()
+    if (user && user.provider !== 'guest') {
+      const { data, error } = await supabase
+        .from('resumes')
+        .insert({
+          user_id: user.id,
+          title,
+          template_id: templateId,
+          data: defaultResumeData,
+          is_public: false,
+        })
+        .select()
+        .single()
 
-    if (error) throw error
-    
-    const resume = data as Resume
-    setResumes(prev => [resume, ...prev])
-    setCurrentResume(resume)
-    return resume
+      if (error) throw error
+      const resume = data as Resume
+      setResumes(prev => [resume, ...prev])
+      setCurrentResumeState(resume)
+      return resume
+    } else {
+      // Guest user - store locally
+      setResumes(prev => [newResume, ...prev])
+      setCurrentResumeState(newResume)
+      return newResume
+    }
   }, [user])
 
-  const updateResume = useCallback(async (id: string, updates: Partial<Resume>) => {
-    const updatedResume = { ...updates, updated_at: new Date().toISOString() }
-    
+  const updateResume = useCallback(async (
+    id: string,
+    updates: Partial<Resume>,
+    options: { persist?: boolean } = {}
+  ) => {
+    const { persist = true } = options
+
+    const updatedResume = {
+      ...updates,
+      updated_at: new Date().toISOString(),
+    }
+
+    // Always update UI immediately.
+    setResumes(prev =>
+      prev.map(r =>
+        r.id === id
+          ? { ...r, ...updatedResume }
+          : r
+      )
+    )
+
+    setCurrentResumeState(prev =>
+      prev?.id === id
+        ? { ...prev, ...updatedResume }
+        : prev
+    )
+
+    // For local-only updates, do not touch Supabase.
+    if (!persist) {
+      return
+    }
+
+    // Persist to Supabase for authenticated users.
     if (user?.provider !== 'guest' && session) {
       const { error } = await supabase
         .from('resumes')
         .update(updatedResume)
         .eq('id', id)
-      if (error) throw error
-    }
 
-    setResumes(prev => prev.map(r => r.id === id ? { ...r, ...updatedResume } : r))
-    if (currentResume?.id === id) {
-      setCurrentResume(prev => prev ? { ...prev, ...updatedResume } : null)
+      if (error) {
+        console.error('Failed to save resume:', error)
+        throw error
+      }
     }
-  }, [user, session, currentResume])
+  }, [user, session])
 
   const deleteResume = useCallback(async (id: string) => {
     if (user?.provider !== 'guest' && session) {
@@ -163,7 +328,7 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
 
     setResumes(prev => prev.filter(r => r.id !== id))
     if (currentResume?.id === id) {
-      setCurrentResume(null)
+      setCurrentResumeState(null)
     }
   }, [user, session, currentResume])
 
@@ -320,7 +485,7 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
   const duplicateResume = useCallback(async (id: string): Promise<Resume> => {
     const resume = resumes.find(r => r.id === id)
     if (!resume) throw new Error('Resume not found')
-    
+
     return createResume(`${resume.title} (Copy)`, resume.template_id)
   }, [resumes, createResume])
 
@@ -337,8 +502,12 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
       a.click()
       URL.revokeObjectURL(url)
     }
-    // PDF export handled by component using html2canvas + jspdf
   }, [resumes, currentResume])
+
+  // Expose setCurrentResume that also saves to localStorage
+  const setCurrentResume = useCallback((resume: Resume | null) => {
+    setCurrentResumeState(resume)
+  }, [])
 
   return (
     <ResumeContext.Provider value={{

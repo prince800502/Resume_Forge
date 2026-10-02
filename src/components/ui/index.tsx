@@ -1,5 +1,6 @@
 import React from 'react'
 import { clsx } from 'clsx'
+import { gsap } from 'gsap'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
@@ -428,6 +429,14 @@ export function Modal({ isOpen, onClose, title, description, children, size = 'm
   const overlayRef = React.useRef<HTMLDivElement>(null)
   const contentRef = React.useRef<HTMLDivElement>(null)
 
+  // Keep the latest onClose callback without making the opening animation
+  // re-run every time the parent component re-renders.
+  const onCloseRef = React.useRef(onClose)
+
+  React.useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
+
   React.useEffect(() => {
     if (!isOpen) return
 
@@ -435,11 +444,29 @@ export function Modal({ isOpen, onClose, title, description, children, size = 'm
     const content = contentRef.current
     if (!overlay || !content) return
 
-    gsap.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: 0.2 })
-    gsap.fromTo(content, { opacity: 0, scale: 0.95, y: 20 }, { opacity: 1, scale: 1, y: 0, duration: 0.3, ease: 'power3.out' })
+    // Opening animation should run only when the modal opens.
+    gsap.killTweensOf([overlay, content])
+
+    gsap.fromTo(
+      overlay,
+      { opacity: 0 },
+      { opacity: 1, duration: 0.2 }
+    )
+
+    gsap.fromTo(
+      content,
+      { opacity: 0, scale: 0.95, y: 20 },
+      {
+        opacity: 1,
+        scale: 1,
+        y: 0,
+        duration: 0.3,
+        ease: 'power3.out'
+      }
+    )
 
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') onCloseRef.current()
     }
 
     document.addEventListener('keydown', handleEscape)
@@ -448,19 +475,30 @@ export function Modal({ isOpen, onClose, title, description, children, size = 'm
     return () => {
       document.removeEventListener('keydown', handleEscape)
       document.body.style.overflow = ''
+      gsap.killTweensOf([overlay, content])
     }
-  }, [isOpen, onClose])
+  }, [isOpen])
 
   const handleClose = () => {
     const overlay = overlayRef.current
     const content = contentRef.current
+
     if (!overlay || !content) {
-      onClose()
+      onCloseRef.current()
       return
     }
 
+    gsap.killTweensOf([overlay, content])
+
     gsap.to(overlay, { opacity: 0, duration: 0.2 })
-    gsap.to(content, { opacity: 0, scale: 0.95, y: 20, duration: 0.2, ease: 'power3.in', onComplete: onClose })
+    gsap.to(content, {
+      opacity: 0,
+      scale: 0.95,
+      y: 20,
+      duration: 0.2,
+      ease: 'power3.in',
+      onComplete: () => onCloseRef.current()
+    })
   }
 
   if (!isOpen) return null

@@ -212,7 +212,7 @@ export function DashboardPage() {
       <aside 
         ref={sidebarRef}
         className="fixed left-0 top-0 z-20 h-screen w-72 bg-[var(--card)] border-r border-[var(--card-border)] flex flex-col hidden lg:block"
-        style={{ background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(20px)' }}
+        style={{ backdropFilter: 'blur(20px)' }}
       >
         <div className="p-6 border-b border-[var(--card-border)]">
           <div className="flex items-center gap-3">
@@ -328,7 +328,7 @@ export function DashboardPage() {
         className="flex-1 lg:ml-72 min-h-screen flex flex-col"
       >
         {/* Top Bar */}
-        <header className="sticky top-0 z-10 bg-[var(--background)]/80 backdrop-blur-xl border-b border-[var(--border)] px-6 py-4 flex items-center justify-between">
+        <header className="sticky top-0 z-10 bg-[var(--background)]/80 backdrop-blur-xl border-b border-[var(--border)] px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <h2 className="text-2xl font-bold bg-gradient-to-r from-cosmic-600 to-nebula-600 bg-clip-text text-transparent">
               Dashboard
@@ -352,7 +352,7 @@ export function DashboardPage() {
         </header>
 
         {/* Content */}
-        <div className="flex-1 p-6 overflow-y-auto">
+        <div className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           {resumes.length === 0 ? (
             <EmptyState 
               onCreateClick={() => setShowCreateModal(true)} 
@@ -490,7 +490,7 @@ interface EmptyStateProps {
 function EmptyState({ onCreateClick, onAtsClick }: EmptyStateProps) {
   return (
     <PageTransition>
-      <Card variant="glass" padding="lg" className="max-w-2xl mx-auto text-center">
+      <Card variant="glass" padding="md" className="w-full max-w-none text-center">
         <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-cosmic-500/20 to-nebula-500/20 flex items-center justify-center mx-auto mb-6">
           <DocumentTextIconSolid className="w-10 h-10 text-cosmic-500" />
         </div>
@@ -498,7 +498,7 @@ function EmptyState({ onCreateClick, onAtsClick }: EmptyStateProps) {
         <p className="text-[var(--muted-foreground)] mb-6">
           Start building your professional resume with our AI-powered templates and live preview.
         </p>
-        <div className="flex gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
           <Button 
             variant="primary" 
             size="lg" 
@@ -520,7 +520,7 @@ function EmptyState({ onCreateClick, onAtsClick }: EmptyStateProps) {
         <Divider label="Key Features" className="my-8" />
 
         <StaggerContainer stagger={0.1} direction="up">
-          <div className="grid md:grid-cols-3 gap-4 text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 text-left">
             {features.map((feature, i) => (
               <Card key={i} variant="hover" padding="md" className="group">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cosmic-500/20 to-nebula-500/20 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">

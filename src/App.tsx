@@ -2,6 +2,8 @@ import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { LoginPage } from '@/pages/LoginPage'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { ResumeBuilderPage } from '@/pages/ResumeBuilderPage'
+import { ATSCheckerPage } from '@/pages/ATSCheckerPage'
 import { useAuth } from '@/contexts/AuthContext'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -39,12 +41,7 @@ export default function App() {
         path="/builder/:id"
         element={
           <ProtectedRoute>
-            <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
-              <div className="text-center p-8">
-                <h2 className="text-2xl font-bold mb-2">Resume Builder</h2>
-                <p className="text-[var(--muted-foreground)]">Coming soon - /builder/:id route</p>
-              </div>
-            </div>
+            <ResumeBuilderPage />
           </ProtectedRoute>
         }
       />
@@ -62,15 +59,10 @@ export default function App() {
         }
       />
       <Route
-        path="/ats-checker"
+        path="/ats-checker/:id?"
         element={
           <ProtectedRoute>
-            <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
-              <div className="text-center p-8">
-                <h2 className="text-2xl font-bold mb-2">ATS Checker</h2>
-                <p className="text-[var(--muted-foreground)]">Coming soon - /ats-checker route</p>
-              </div>
-            </div>
+            <ATSCheckerPage />
           </ProtectedRoute>
         }
       />

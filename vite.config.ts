@@ -16,5 +16,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     sourcemap: true,
+    rollupOptions: {
+      external: (id) => {
+        // Externalize all core-js modules
+        if (id.startsWith('core-js/modules/')) return true
+        return false
+      },
+    },
+  },
+  optimizeDeps: {
+    exclude: ['canvg'],
+    include: ['core-js'],
   },
 })

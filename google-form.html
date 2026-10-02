@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Form - ResumeBuilder Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gform-blue: #1a73e8;
+      --gform-blue-hover: #1557b0;
+      --gform-blue-light: #e8f0fe;
+      --gform-gray: #5f6368;
+      --gform-gray-light: #f1f3f4;
+      --gform-border: #dadce0;
+      --gform-border-focus: #1a73e8;
+      --gform-error: #d93025;
+      --gform-success: #188038;
+      --gform-white: #ffffff;
+      --gform-bg: #f8f9fa;
+      --font-primary: 'Google Sans', 'Inter', -apple-system, sans-serif;
+      --font-body: 'Inter', -apple-system, sans-serif;
+      --shadow-sm: 0 1px 2px rgba(60,64,67,0.15);
+      --shadow-md: 0 1px 3px rgba(60,64,67,0.15), 0 4px 8px rgba(60,64,67,0.1);
+      --radius: 8px;
+      --transition: 0.2s ease;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-body);
+      background: var(--gform-bg);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+      color: #202124;
+      line-height: 1.5;
+    }
+
+    .form-container {
+      width: 100%;
+      max-width: 640px;
+      background: var(--gform-white);
+      border-radius: 16px;
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+
+    /* Header */
+    .form-header {
+      padding: 40px 40px 24px;
+      text-align: center;
+      background: linear-gradient(180deg, #fff 0%, #f8f9fa 100%);
+      border-bottom: 1px solid var(--gform-border);
+    }
+
+    .form-title {
+      font-family: var(--font-primary);
+      font-size: 28px;
+      font-weight: 500;
+      color: #202124;
+      margin-bottom: 8px;
+      letter-spacing: -0.25px;
+    }
+
+    .form-description {
+      font-size: 15px;
+      color: var(--gform-gray);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .form-progress {
+      margin-top: 24px;
+      height: 4px;
+      background: var(--gform-gray-light);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .form-progress-bar {
+      height: 100%;
+      background: var(--gform-blue);
+      border-radius: 2px;
+      transition: width var(--transition);
+      width: 33%;
+    }
+
+    /* Form Body */
+    .form-body {
+      padding: 32px 40px 40px;
+    }
+
+    .form-section {
+      margin-bottom: 32px;
+    }
+
+    .section-title {
+      font-family: var(--font-primary);
+      font-size: 16px;
+      font-weight: 500;
+      color: #3c4043;
+      margin-bottom: 20px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--gform-border);
+    }
+
+    /* Field Groups */
+    .field-group {
+      margin-bottom: 24px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 560px) {
+      .field-row { grid-template-columns: 1fr; }
+    }
+
+    /* Labels */
+    .field-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #3c4043;
+      margin-bottom: 6px;
+    }
+
+    .required-indicator {
+      color: var(--gform-error);
+      margin-left: 2px;
+    }
+
+    .field-hint {
+      font-size: 12px;
+      color: var(--gform-gray);
+      margin-top: 4px;
+    }
+
+    /* Inputs */
+    .field-input,
+    .field-textarea,
+    .field-select {
+      width: 100%;
+      padding: 12px 16px;
+      font-family: var(--font-body);
+      font-size: 15px;
+      color: #202124;
+      background: var(--gform-white);
+      border: 1px solid var(--gform-border);
+      border-radius: var(--radius);
+      transition: all var(--transition);
+      outline: none;
+    }
+
+    .field-input::placeholder,
+    .field-textarea::placeholder {
+      color: #9aa0a6;
+    }
+
+    .field-input:hover,
+    .field-textarea:hover,
+    .field-select:hover {
+      border-color: #c1c7cd;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .field-input:focus,
+    .field-textarea:focus,
+    .field-select:focus {
+      border-color: var(--gform-border-focus);
+      box-shadow: 0 0 0 3px var(--gform-blue-light);
+    }
+
+    .field-input.error,
+    .field-textarea.error,
+    .field-select.error {
+      border-color: var(--gform-error);
+    }
+
+    .field-input.error:focus,
+    .field-textarea.error:focus,
+    .field-select.error:focus {
+      box-shadow: 0 0 0 3px rgba(217,48,37,0.15);
+    }
+
+    .field-textarea {
+      min-height: 120px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .field-select {
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%235f6368' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 44px;
+    }
+
+    /* Checkboxes & Radios */
+    .choice-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .choice-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border: 1px solid var(--gform-border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .choice-item:hover {
+      background: var(--gform-gray-light);
+      border-color: #c1c7cd;
+    }
+
+    .choice-item:has(input:focus-visible) {
+      border-color: var(--gform-border-focus);
+      box-shadow: 0 0 0 3px var(--gform-blue-light);
+    }
+
+    .choice-item input {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--gform-blue);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .choice-label {
+      font-size: 15px;
+      color: #202124;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .choice-item input:checked + .choice-label {
+      font-weight: 500;
+    }
+
+    /* File Upload */
+    .file-upload {
+      position: relative;
+    }
+
+    .file-upload-input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .file-upload-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 24px;
+      border: 2px dashed var(--gform-border);
+      border-radius: var(--radius);
+      text-align: center;
+      transition: all var(--transition);
+      cursor: pointer;
+    }
+
+    .file-upload-zone:hover,
+    .file-upload-input:focus + .file-upload-zone {
+      border-color: var(--gform-blue);
+      background: var(--gform-blue-light);
+    }
+
+    .file-upload-icon {
+      width: 48px;
+      height: 48px;
+      color: var(--gform-gray);
+      margin-bottom: 12px;
+    }
+
+    .file-upload-text {
+      font-size: 14px;
+      color: #3c4043;
+    }
+
+    .file-upload-hint {
+      font-size: 12px;
+      color: var(--gform-gray);
+      margin-top: 4px;
+    }
+
+    .file-list {
+      margin-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .file-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--gform-gray-light);
+      border-radius: var(--radius);
+      font-size: 13px;
+    }
+
+    .file-icon {
+      width: 20px;
+      height: 20px;
+      color: var(--gform-blue);
+      flex-shrink: 0;
+    }
+
+    .file-name {
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .file-size {
+      color: var(--gform-gray);
+      font-size: 12px;
+    }
+
+    .file-remove {
+      background: none;
+      border: none;
+      color: var(--gform-gray);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 4px;
+      transition: color var(--transition);
+    }
+
+    .file-remove:hover { color: var(--gform-error); }
+
+    /* Error Messages */
+    .field-error {
+      display: none;
+      font-size: 13px;
+      color: var(--gform-error);
+      margin-top: 6px;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .field-error.visible { display: flex; }
+
+    .field-error::before {
+      content: '';
+      width: 14px;
+      height: 14px;
+      background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23d93025'%3E%3Cpath d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z'/%3E%3C/svg%3E") center/contain no-repeat;
+      flex-shrink: 0;
+    }
+
+    /* Navigation Buttons */
+    .form-navigation {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 40px;
+      padding-top: 24px;
+      border-top: 1px solid var(--gform-border);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 24px;
+      font-family: var(--font-primary);
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--gform-blue);
+      color: var(--gform-white);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: var(--gform-blue-hover);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-secondary {
+      background: var(--gform-gray-light);
+      color: #3c4043;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #e8eaed;
+    }
+
+    /* Submit Section */
+    .submit-section {
+      text-align: center;
+      padding-top: 24px;
+      border-top: 1px solid var(--gform-border);
+    }
+
+    .submit-btn {
+      min-width: 160px;
+    }
+
+    .submit-note {
+      margin-top: 12px;
+      font-size: 13px;
+      color: var(--gform-gray);
+    }
+
+    .submit-note a {
+      color: var(--gform-blue);
+      text-decoration: none;
+    }
+
+    .submit-note a:hover { text-decoration: underline; }
+
+    /* Toast/Success */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      padding: 16px 24px;
+      background: #3c4043;
+      color: white;
+      border-radius: 8px;
+      box-shadow: var(--shadow-md);
+      font-size: 14px;
+      z-index: 1000;
+      animation: slideUp 0.3s ease;
+      display: none;
+    }
+
+    .toast.show { display: block; }
+    .toast.success { background: var(--gform-success); }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Confirmation Screen */
+    .confirmation {
+      display: none;
+      text-align: center;
+      padding: 60px 40px;
+    }
+
+    .confirmation.show { display: block; }
+
+    .confirmation-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--gform-blue-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 24px;
+      color: var(--gform-blue);
+    }
+
+    .confirmation-title {
+      font-family: var(--font-primary);
+      font-size: 28px;
+      font-weight: 500;
+      color: #202124;
+      margin-bottom: 12px;
+    }
+
+    .confirmation-message {
+      color: var(--gform-gray);
+      font-size: 16px;
+      max-width: 400px;
+      margin: 0 auto 32px;
+    }
+
+    .confirmation-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    /* Hidden utility */
+    .hidden { display: none !important; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .form-header, .form-body { padding-left: 20px; padding-right: 20px; }
+      .form-title { font-size: 24px; }
+      .btn { width: 100%; }
+      .form-navigation { flex-direction: column-reverse; gap: 12px; }
+      .confirmation-actions { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container" id="formContainer">
+    <!-- Progress Bar -->
+    <div class="form-progress" role="progressbar" aria-valuenow="33" aria-valuemin="0" aria-valuemax="100" aria-label="Form progress">
+      <div class="form-progress-bar" id="progressBar"></div>
+    </div>
+
+    <!-- Form Pages -->
+    <div class="form-page active" id="page1" data-page="1">
+      <header class="form-header">
+        <h1 class="form-title">ResumeBuilder Pro - Contact Us</h1>
+        <p class="form-description">Have questions about our resume builder? Want to partner with us? Fill out the form and we'll get back to you within 24 hours.</p>
+      </header>
+      <div class="form-body">
+        <div class="form-section">
+          <h2 class="section-title">Your Information</h2>
+          
+          <div class="field-group">
+            <label class="field-label" for="fullName">Full Name <span class="required-indicator" aria-hidden="true">*</span></label>
+            <input type="text" class="field-input" id="fullName" name="fullName" placeholder="John Smith" required autocomplete="name" aria-required="true">
+            <div class="field-error" id="fullNameError" role="alert">Please enter your full name</div>
+          </div>
+
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label" for="email">Email Address <span class="required-indicator" aria-hidden="true">*</span></label>
+              <input type="email" class="field-input" id="email" name="email" placeholder="john@example.com" required autocomplete="email" aria-required="true">
+              <div class="field-error" id="emailError" role="alert">Please enter a valid email address</div>
+            </div>
+            <div class="field-group">
+              <label class="field-label" for="phone">Phone Number</label>
+              <input type="tel" class="field-input" id="phone" name="phone" placeholder="+1 (555) 000-0000" autocomplete="tel">
+              <div class="field-hint">Optional - for callback requests</div>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="company">Company / Organization</label>
+            <input type="text" class="field-input" id="company" name="company" placeholder="Acme Inc." autocomplete="organization">
+          </div>
+        </div>
+      </div>
+      <nav class="form-navigation">
+        <button type="button" class="btn btn-secondary" id="prevBtn1" disabled>Previous</button>
+        <button type="button" class="btn btn-primary" id="nextBtn1">Next</button>
+      </nav>
+    </div>
+
+    <div class="form-page" id="page2" data-page="2" hidden>
+      <header class="form-header">
+        <h1 class="form-title">Tell Us More</h1>
+        <p class="form-description">Help us understand how we can best assist you.</p>
+      </header>
+      <div class="form-body">
+        <div class="form-section">
+          <h2 class="section-title">Inquiry Details</h2>
+
+          <div class="field-group">
+            <label class="field-label" for="inquiryType">What is this regarding? <span class="required-indicator" aria-hidden="true">*</span></label>
+            <select class="field-select" id="inquiryType" name="inquiryType" required aria-required="true">
+              <option value="">Select a topic</option>
+              <option value="general">General Question</option>
+              <option value="support">Technical Support</option>
+              <option value="billing">Billing & Subscription</option>
+              <option value="partnership">Partnership & Business</option>
+              <option value="press">Press & Media</option>
+              <option value="careers">Careers</option>
+              <option value="feedback">Feature Request / Feedback</option>
+              <option value="other">Other</option>
+            </select>
+            <div class="field-error" id="inquiryTypeError" role="alert">Please select a topic</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="priority">Priority Level</label>
+            <div class="choice-group" role="radiogroup" aria-label="Priority level">
+              <label class="choice-item">
+                <input type="radio" name="priority" value="low" checked>
+                <span class="choice-label">Low - General inquiry</span>
+              </label>
+              <label class="choice-item">
+                <input type="radio" name="priority" value="medium">
+                <span class="choice-label">Medium - Need response soon</span>
+              </label>
+              <label class="choice-item">
+                <input type="radio" name="priority" value="high">
+                <span class="choice-label">High - Urgent issue</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label" for="subject">Subject <span class="required-indicator" aria-hidden="true">*</span></label>
+            <input type="text" class="field-input" id="subject" name="subject" placeholder="Brief summary of your request" required aria-required="true">
+            <div class="field-error" id="subjectError" role="alert">Please enter a subject</div>
+          </div>
+        </div>
+      </div>
+      <nav class="form-navigation">
+        <button type="button" class="btn btn-secondary" id="prevBtn2">Previous</button>
+        <button type="button" class="btn btn-primary" id="nextBtn2">Next</button>
+      </nav>
+    </div>
+
+    <div class="form-page" id="page3" data-page="3" hidden>
+      <header class="form-header">
+        <h1 class="form-title">Final Details</h1>
+        <p class="form-description">Almost done! Add any additional information and submit.</p>
+      </header>
+      <div class="form-body">
+        <div class="form-section">
+          <h2 class="section-title">Message & Attachments</h2>
+
+          <div class="field-group">
+            <label class="field-label" for="message">Your Message <span class="required-indicator" aria-hidden="true">*</span></label>
+            <textarea class="field-textarea" id="message" name="message" placeholder="Describe your question or request in detail..." required aria-required="true"></textarea>
+            <div class="field-error" id="messageError" role="alert">Please enter your message</div>
+            <div class="field-hint">Minimum 10 characters</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Attach Files</label>
+            <div class="file-upload" id="fileUpload">
+              <input type="file" class="file-upload-input" id="fileInput" name="attachments" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" aria-label="File upload">
+              <div class="file-upload-zone" id="dropZone">
+                <svg class="file-upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M17 10V5a2 2 0 0 0-2-2h-.5M7 10V5a2 2 0 0 1 2-2h.5"/>
+                </svg>
+                <p class="file-upload-text">Drag & drop files here, or click to browse</p>
+                <p class="file-upload-hint">PDF, DOC, DOCX, TXT, PNG, JPG up to 10MB each</p>
+              </div>
+              <div class="file-list" id="fileList" aria-live="polite"></div>
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label class="choice-item">
+              <input type="checkbox" name="newsletter" value="yes" id="newsletter">
+              <span class="choice-label">Subscribe to our newsletter for resume tips and product updates</span>
+            </label>
+          </div>
+
+          <div class="field-group">
+            <label class="choice-item">
+              <input type="checkbox" name="terms" value="yes" id="terms" required aria-required="true">
+              <span class="choice-label">I agree to the <a href="#terms" style="color: var(--gform-blue);">Terms of Service</a> and <a href="#privacy" style="color: var(--gform-blue);">Privacy Policy</a> <span class="required-indicator" aria-hidden="true">*</span></span>
+            </label>
+            <div class="field-error" id="termsError" role="alert">You must agree to continue</div>
+          </div>
+        </div>
+      </div>
+      <nav class="form-navigation">
+        <button type="button" class="btn btn-secondary" id="prevBtn3">Previous</button>
+        <div class="submit-section">
+          <button type="button" class="btn btn-primary submit-btn" id="submitBtn">Submit</button>
+          <p class="submit-note">By submitting, you agree to our <a href="#terms">Terms</a> and <a href="#privacy">Privacy Policy</a></p>
+        </div>
+      </nav>
+    </div>
+
+    <!-- Confirmation Screen -->
+    <div class="confirmation" id="confirmation" role="status" aria-live="polite">
+      <div class="confirmation-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+      </div>
+      <h2 class="confirmation-title">Thanks for reaching out!</h2>
+      <p class="confirmation-message">We've received your message and will get back to you at <strong id="confirmEmail"></strong> within 24 hours.</p>
+      <div class="confirmation-actions">
+        <button type="button" class="btn btn-primary" id="newSubmissionBtn">Submit Another</button>
+        <a href="index.html" class="btn btn-secondary">Back to Homepage</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+
+  <script>
+    // ========================================
+    // Google Forms Style Form - JavaScript
+    // ========================================
+
+    // State
+    const state = {
+      currentPage: 1,
+      totalPages: 3,
+      formData: {},
+      files: []
+    };
+
+    // DOM Elements
+    const els = {
+      pages: document.querySelectorAll('.form-page'),
+      progressBar: document.getElementById('progressBar'),
+      confirmation: document.getElementById('confirmation'),
+      confirmEmail: document.getElementById('confirmEmail'),
+      toast: document.getElementById('toast'),
+      fileInput: document.getElementById('fileInput'),
+      dropZone: document.getElementById('dropZone'),
+      fileList: document.getElementById('fileList'),
+      submitBtn: document.getElementById('submitBtn'),
+      newSubmissionBtn: document.getElementById('newSubmissionBtn')
+    };
+
+    // Navigation buttons
+    const navBtns = {
+      next: [
+        document.getElementById('nextBtn1'),
+        document.getElementById('nextBtn2')
+      ],
+      prev: [
+        document.getElementById('prevBtn1'),
+        document.getElementById('prevBtn2'),
+        document.getElementById('prevBtn3')
+      ]
+    };
+
+    // Required fields per page
+    const requiredFields = {
+      1: ['fullName', 'email'],
+      2: ['inquiryType', 'subject'],
+      3: ['message', 'terms']
+    };
+
+    // ========================================
+    // Validation
+    // ========================================
+    function validateField(fieldName, value, element) {
+      const errorEl = document.getElementById(`${fieldName}Error`);
+      let isValid = true;
+      let errorMsg = '';
+
+      switch (fieldName) {
+        case 'fullName':
+          isValid = value.trim().length >= 2;
+          errorMsg = 'Please enter your full name (at least 2 characters)';
+          break;
+        case 'email':
+          isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+          errorMsg = 'Please enter a valid email address';
+          break;
+        case 'inquiryType':
+          isValid = value !== '';
+          errorMsg = 'Please select a topic';
+          break;
+        case 'subject':
+          isValid = value.trim().length >= 3;
+          errorMsg = 'Subject must be at least 3 characters';
+          break;
+        case 'message':
+          isValid = value.trim().length >= 10;
+          errorMsg = 'Message must be at least 10 characters';
+          break;
+        case 'terms':
+          isValid = element?.checked === true;
+          errorMsg = 'You must agree to continue';
+          break;
+      }
+
+      if (errorEl) {
+        errorEl.textContent = errorMsg;
+        errorEl.classList.toggle('visible', !isValid);
+      }
+      if (element) element.classList.toggle('error', !isValid);
+
+      return isValid;
+    }
+
+    function validatePage(pageNum) {
+      const fields = requiredFields[pageNum] || [];
+      let allValid = true;
+
+      fields.forEach(fieldName => {
+        const element = document.getElementById(fieldName);
+        if (!element) return;
+
+        const value = element.type === 'checkbox' ? element.checked : element.value;
+        if (!validateField(fieldName, value, element)) {
+          allValid = false;
+        }
+      });
+
+      return allValid;
+    }
+
+    function clearErrors() {
+      document.querySelectorAll('.field-error').forEach(el => el.classList.remove('visible'));
+      document.querySelectorAll('.field-input, .field-textarea, .field-select').forEach(el => el.classList.remove('error'));
+    }
+
+    // ========================================
+    // Navigation
+    // ========================================
+    function goToPage(pageNum) {
+      if (pageNum < 1 || pageNum > state.totalPages) return;
+
+      // Validate current page before moving forward
+      if (pageNum > state.currentPage && !validatePage(state.currentPage)) {
+        showToast('Please fix the errors above', 'error');
+        return;
+      }
+
+      // Hide current page
+      els.pages[state.currentPage - 1].hidden = true;
+      els.pages[state.currentPage - 1].classList.remove('active');
+
+      // Show new page
+      state.currentPage = pageNum;
+      els.pages[pageNum - 1].hidden = false;
+      els.pages[pageNum - 1].classList.add('active');
+
+      // Update progress
+      const progress = (pageNum / state.totalPages) * 100;
+      els.progressBar.style.width = `${progress}%`;
+      els.progressBar.parentElement.setAttribute('aria-valuenow', Math.round(progress));
+
+      // Focus first input on new page
+      const firstInput = els.pages[pageNum - 1].querySelector('input, select, textarea');
+      if (firstInput) firstInput.focus();
+
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Event listeners for nav buttons
+    navBtns.next.forEach((btn, i) => {
+      btn.addEventListener('click', () => goToPage(i + 2));
+    });
+
+    navBtns.prev.forEach((btn, i) => {
+      btn.addEventListener('click', () => goToPage(i + 1));
+    });
+
+    // ========================================
+    // Real-time validation
+    // ========================================
+    document.querySelectorAll('.field-input, .field-textarea, .field-select').forEach(input => {
+      input.addEventListener('blur', () => {
+        if (input.required || input.value) {
+          validateField(input.name, input.value, input);
+        }
+      });
+
+      input.addEventListener('input', () => {
+        if (input.classList.contains('error')) {
+          validateField(input.name, input.value, input);
+        }
+      });
+    });
+
+    // Checkbox validation
+    document.querySelectorAll('input[type="checkbox"][required]').forEach(cb => {
+      cb.addEventListener('change', () => validateField(cb.name, cb.checked, cb));
+    });
+
+    // ========================================
+    // File Upload
+    // ========================================
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function getFileIcon(name) {
+      const ext = name.split('.').pop().toLowerCase();
+      if (['pdf'].includes(ext)) return 'pdf';
+      if (['doc', 'docx'].includes(ext)) return 'doc';
+      if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) return 'image';
+      if (['txt', 'md'].includes(ext)) return 'text';
+      return 'file';
+    }
+
+    function renderFileList() {
+      els.fileList.innerHTML = state.files.map((file, index) => `
+        <div class="file-item" data-index="${index}">
+          <svg class="file-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            ${getFileIconSvg(file.icon)}
+          </svg>
+          <span class="file-name" title="${file.name}">${file.name}</span>
+          <span class="file-size">${file.size}</span>
+          <button type="button" class="file-remove" aria-label="Remove ${file.name}" data-index="${index}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      `).join('');
+
+      // Add remove handlers
+      els.fileList.querySelectorAll('.file-remove').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const index = parseInt(btn.dataset.index, 10);
+          state.files.splice(index, 1);
+          renderFileList();
+          updateFileInput();
+        });
+      });
+    }
+
+    function getFileIconSvg(type) {
+      const icons = {
+        pdf: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>',
+        doc: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>',
+        image: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
+        text: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>',
+        file: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>'
+      };
+      return icons[type] || icons.file;
+    }
+
+    function addFiles(fileList) {
+      const validFiles = Array.from(fileList).filter(file => {
+        if (file.size > 10 * 1024 * 1024) {
+          showToast(`${file.name} exceeds 10MB limit`, 'error');
+          return false;
+        }
+        return true;
+      });
+
+      validFiles.forEach(file => {
+        state.files.push({
+          name: file.name,
+          size: formatFileSize(file.size),
+          icon: getFileIcon(file.name),
+          file: file
+        });
+      });
+
+      renderFileList();
+      updateFileInput();
+    }
+
+    function updateFileInput() {
+      // Create a new DataTransfer to update the file input
+      const dt = new DataTransfer();
+      state.files.forEach(f => dt.items.add(f.file));
+      els.fileInput.files = dt.files;
+    }
+
+    // Drag and drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      els.dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }, false);
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+      els.dropZone.addEventListener(eventName, () => {
+        els.dropZone.style.borderColor = 'var(--gform-blue)';
+        els.dropZone.style.background = 'var(--gform-blue-light)';
+      }, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+      els.dropZone.addEventListener(eventName, () => {
+        els.dropZone.style.borderColor = '';
+        els.dropZone.style.background = '';
+      }, false);
+    });
+
+    els.dropZone.addEventListener('drop', (e) => {
+      addFiles(e.dataTransfer.files);
+    }, false);
+
+    els.fileInput.addEventListener('change', (e) => {
+      addFiles(e.target.files);
+    });
+
+    // Click to browse
+    els.dropZone.addEventListener('click', () => els.fileInput.click());
+
+    // ========================================
+    // Form Submission
+    // ========================================
+    els.submitBtn.addEventListener('click', async () => {
+      if (!validatePage(3)) {
+        showToast('Please fix the errors above', 'error');
+        return;
+      }
+
+      // Collect form data
+      const formData = new FormData();
+      document.querySelectorAll('input, select, textarea').forEach(input => {
+        if (input.type === 'checkbox' || input.type === 'radio') {
+          if (input.checked) formData.append(input.name, input.value);
+        } else if (input.type !== 'file') {
+          formData.append(input.name, input.value);
+        }
+      });
+
+      // Add files
+      state.files.forEach(f => formData.append('attachments', f.file));
+
+      // Show loading
+      els.submitBtn.disabled = true;
+      els.submitBtn.innerHTML = '<span class="spinner" style="width:16px;height:16px;border:2px solid transparent;border-top-color:#fff;border-radius:50%;animation:spin 0.6s linear infinite"></span> Submitting...';
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Show confirmation
+      showConfirmation(formData.get('email'));
+    });
+
+    function showConfirmation(email) {
+      // Hide all pages
+      els.pages.forEach(page => {
+        page.hidden = true;
+        page.classList.remove('active');
+      });
+
+      // Show confirmation
+      els.confirmation.classList.add('show');
+      els.confirmEmail.textContent = email;
+
+      // Reset progress
+      els.progressBar.style.width = '100%';
+    }
+
+    // New submission
+    els.newSubmissionBtn.addEventListener('click', () => {
+      // Reset state
+      state.currentPage = 1;
+      state.formData = {};
+      state.files = [];
+
+      // Reset form
+      document.querySelectorAll('input, select, textarea').forEach(input => {
+        if (input.type === 'checkbox' || input.type === 'radio') {
+          input.checked = input.defaultChecked;
+        } else {
+          input.value = '';
+        }
+        input.classList.remove('error');
+      });
+
+      document.querySelectorAll('.field-error').forEach(el => el.classList.remove('visible'));
+      renderFileList();
+
+      // Show page 1
+      els.confirmation.classList.remove('show');
+      els.pages[0].hidden = false;
+      els.pages[0].classList.add('active');
+      els.progressBar.style.width = '33%';
+      els.progressBar.parentElement.setAttribute('aria-valuenow', 33);
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // ========================================
+    // Toast
+    // ========================================
+    function showToast(message, type = 'info') {
+      els.toast.textContent = message;
+      els.toast.className = 'toast show';
+      if (type === 'success') els.toast.classList.add('success');
+      if (type === 'error') els.toast.classList.add('error');
+
+      setTimeout(() => {
+        els.toast.classList.remove('show');
+      }, 4000);
+    }
+
+    // ========================================
+    // Keyboard Navigation
+    // ========================================
+    document.addEventListener('keydown', (e) => {
+      // Enter to submit on last page
+      if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA' && state.currentPage === state.totalPages) {
+        if (!e.target.classList.contains('btn')) {
+          e.preventDefault();
+          els.submitBtn.click();
+        }
+      }
+    });
+
+    // ========================================
+    // Initialize
+    // ========================================
+    // Add spinner animation
+    const style = document.createElement('style');
+    style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(style);
+
+    // Focus first field
+    document.getElementById('fullName').focus();
+  </script>
+</body>
+</html>

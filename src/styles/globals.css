@@ -1,0 +1,239 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --void-50: #f8fafc;
+    --void-100: #f1f5f9;
+    --void-200: #e2e8f0;
+    --void-300: #cbd5e1;
+    --void-400: #94a3b8;
+    --void-500: #64748b;
+    --void-600: #475569;
+    --void-700: #334155;
+    --void-800: #1e293b;
+    --void-900: #0f172a;
+    --void-950: #020617;
+
+    --cosmic-500: #6366f1;
+    --cosmic-600: #4f46e5;
+    --cosmic-700: #4338ca;
+
+    --nebula-500: #d946ef;
+    --nebula-600: #c026d3;
+
+    --background: var(--void-50);
+    --foreground: var(--void-950);
+    --card: #ffffff;
+    --card-border: var(--void-200);
+    --muted: var(--void-100);
+    --muted-foreground: var(--void-500);
+    --border: var(--void-200);
+    --ring: var(--cosmic-500);
+  }
+
+  .dark {
+    --background: var(--void-950);
+    --foreground: var(--void-50);
+    --card: var(--void-900);
+    --card-border: var(--void-800);
+    --muted: var(--void-800);
+    --muted-foreground: var(--void-400);
+    --border: var(--void-800);
+    --ring: var(--cosmic-500);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-[var(--background)] text-[var(--foreground)] transition-colors duration-300;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  ::selection {
+    @apply bg-cosmic-500/30 text-cosmic-600;
+  }
+
+  .dark ::selection {
+    @apply bg-cosmic-500/40 text-cosmic-400;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-gradient-to-r from-cosmic-600 to-nebula-600 text-white hover:from-cosmic-700 hover:to-nebula-700 focus-visible:ring-cosmic-500 shadow-lg shadow-cosmic-500/25 active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply btn bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] hover:bg-[var(--muted)] focus-visible:ring-[var(--ring)];
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-[var(--foreground)] hover:bg-[var(--muted)] focus-visible:ring-[var(--ring)];
+  }
+
+  .btn-danger {
+    @apply btn bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 focus-visible:ring-red-500 shadow-lg shadow-red-500/25;
+  }
+
+  .input {
+    @apply w-full rounded-xl bg-[var(--card)] border border-[var(--border)] px-4 py-3 text-[var(--foreground)] placeholder-[var(--muted-foreground)] transition-all duration-200 focus:border-cosmic-500 focus:outline-none focus:ring-2 focus:ring-cosmic-500/20;
+  }
+
+  .label {
+    @apply block mb-2 text-sm font-medium text-[var(--foreground)];
+  }
+
+  .card {
+    @apply rounded-2xl bg-[var(--card)] border border-[var(--card-border)] shadow-void transition-all duration-300;
+  }
+
+  .card-hover {
+    @apply card hover:border-cosmic-500/50 hover:shadow-cosmic;
+  }
+
+  .glass {
+    @apply bg-white/10 backdrop-blur-xl border border-white/20;
+  }
+
+  .dark .glass {
+    @apply bg-void-900/50 backdrop-blur-xl border border-void-700/50;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-cosmic-600 via-nebula-600 to-cosmic-600 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient;
+  }
+
+  .border-gradient {
+    @apply relative before:absolute before:inset-0 before:rounded-[inherit] before:bg-gradient-to-r before:from-cosmic-500 before:via-nebula-500 before:to-cosmic-500 before:-z-10;
+  }
+
+  .animate-in {
+    animation: animateIn 0.5s ease-out forwards;
+  }
+
+  .animate-out {
+    animation: animateOut 0.3s ease-in forwards;
+  }
+
+  @keyframes animateIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes animateOut {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+}
+
+/* Custom scrollbar for webkit */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-[var(--background)];
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-[var(--void-600)] rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-[var(--void-500)];
+}
+
+::-webkit-scrollbar-corner {
+  @apply bg-[var(--background)];
+}
+
+/* GSAP ScrollTrigger marker styles */
+.gsap-marker {
+  z-index: 9999 !important;
+}
+
+/* Print styles for resume */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
+}
+
+/* Focus visible polyfill */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

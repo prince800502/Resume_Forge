@@ -2,11 +2,27 @@ export interface User {
   id: string
   email: string
   full_name?: string
+  first_name?: string
+  last_name?: string
   avatar_url?: string
+  phone?: string
+  phone_verified?: boolean
   provider?: 'email' | 'google' | 'microsoft' | 'guest'
   created_at: string
   updated_at: string
   preferences?: UserPreferences
+}
+
+export interface SessionInfo {
+  id: string
+  device: string
+  browser: string
+  os: string
+  ip: string
+  location: string
+  created_at: string
+  last_active: string
+  is_current: boolean
 }
 
 export interface UserPreferences {

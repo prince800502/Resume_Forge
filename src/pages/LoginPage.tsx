@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { gsap } from 'gsap'
 import { 
   EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon,
@@ -12,7 +12,7 @@ import {
 } from '@heroicons/react/24/solid'
 import { useAuth } from '@/contexts/AuthContext'
 import { useTheme } from '@/contexts/ThemeContext'
-import { Button, Input, Card, Badge, Toggle, Divider } from '@/components/ui'
+import { Button, Card, Input, Divider, Badge, Toggle } from '@/components/ui'
 import { FloatingParticles, MorphingBlobs, PageTransition } from '@/components/animations/BlackHoleAnimation'
 import toast from 'react-hot-toast'
 
@@ -220,12 +220,14 @@ export function LoginPage() {
             {/* Login / signup form */}
             <div className="w-full min-w-0">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cosmic-500 to-nebula-500 mb-4 animate-float">
-              <SparklesIconSolid className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-cosmic-600 via-nebula-600 to-cosmic-600 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
-              ResumeForge
-            </h1>
+            <Link to="/" className="group cursor-pointer" aria-label="Go to homepage">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cosmic-500 to-nebula-500 mb-4 animate-float group-hover:scale-105 transition-transform duration-300">
+                <SparklesIconSolid className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-cosmic-600 via-nebula-600 to-cosmic-600 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+                ResumeForge
+              </h1>
+            </Link>
             <p className="mt-2 text-[var(--muted-foreground)]">
               {isSignUp ? 'Create your account to start building' : 'Sign in to continue building your resume'}
             </p>

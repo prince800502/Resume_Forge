@@ -7,6 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { Button, Card } from '@/components/ui'
 import { FloatingParticles, MorphingBlobs, PageTransition } from '@/components/animations/BlackHoleAnimation'
 import toast from 'react-hot-toast'
+import { supabase } from '@/services/supabase'
 
 export function AuthCallbackPage() {
   const navigate = useNavigate()
@@ -27,20 +28,52 @@ export function AuthCallbackPage() {
   }, [])
 
   useEffect(() => {
-    const checkAuth = async () => {
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      if (!authLoading) {
-        setStatus('success')
-        setMessage('Sign in successful! Redirecting...')
+    const handleAuthCallback = async () => {
+      try {
+        // Let Supabase process the OAuth callback (code in URL hash/query params)
+        // This exchanges the auth code for a session
+        const { data: { session }, error } = await supabase.auth.getSession()
         
-        setTimeout(() => {
-          navigate('/dashboard', { replace: true })
-        }, 1500)
+        if (error) {
+          console.error('Auth callback error:', error)
+          throw error
+        }
+
+        // Wait for auth context to sync
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        
+        if (!authLoading) {
+          if (session) {
+            setStatus('success')
+            setMessage('Sign in successful! Redirecting...')
+            
+            setTimeout(() => {
+              navigate('/dashboard', { replace: true })
+            }, 1500)
+          } else {
+            // No session yet, wait a bit more and check again
+            await new Promise(resolve => setTimeout(resolve, 2000))
+            const { data: { session: retrySession } } = await supabase.auth.getSession()
+            if (retrySession) {
+              setStatus('success')
+              setMessage('Sign in successful! Redirecting...')
+              setTimeout(() => {
+                navigate('/dashboard', { replace: true })
+              }, 1500)
+            } else {
+              throw new Error('No session established after OAuth callback')
+            }
+          }
+        }
+      } catch (error: any) {
+        console.error('OAuth callback failed:', error)
+        setStatus('error')
+        setMessage(error.message || 'Authentication failed. Please try again.')
+        toast.error(error.message || 'Authentication failed. Please try again.')
       }
     }
 
-    checkAuth()
+    handleAuthCallback()
   }, [authLoading, navigate])
 
   useEffect(() => {

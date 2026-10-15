@@ -421,7 +421,7 @@ interface ModalProps {
   title?: string
   description?: string
   children: React.ReactNode
-  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full'
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full'
   className?: string
 }
 
@@ -508,6 +508,7 @@ export function Modal({ isOpen, onClose, title, description, children, size = 'm
     md: 'max-w-md',
     lg: 'max-w-lg',
     xl: 'max-w-xl',
+    '2xl': 'max-w-5xl',
     full: 'max-w-4xl',
   }
 
@@ -524,14 +525,15 @@ export function Modal({ isOpen, onClose, title, description, children, size = 'm
       <div
         ref={contentRef}
         className={clsx(
-          'relative w-full rounded-2xl bg-[var(--card)] border border-[var(--card-border)] shadow-void overflow-hidden',
+          'relative w-full rounded-2xl bg-[var(--card)] border border-[var(--card-border)] shadow-void overflow-hidden flex flex-col',
           sizeStyles[size],
           className
         )}
         onClick={e => e.stopPropagation()}
+        style={{ maxHeight: '90dvh' }}
       >
         {(title || description) && (
-          <div className="px-6 py-4 border-b border-[var(--border)]">
+          <div className="px-6 py-4 border-b border-[var(--border)] flex-shrink-0">
             {title && (
               <h2 id="modal-title" className="text-lg font-semibold text-[var(--foreground)]">
                 {title}
@@ -544,7 +546,7 @@ export function Modal({ isOpen, onClose, title, description, children, size = 'm
             )}
           </div>
         )}
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto min-h-0 flex-1">
           {children}
         </div>
       </div>

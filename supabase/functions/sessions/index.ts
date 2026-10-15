@@ -1,5 +1,5 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
+import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -61,69 +61,66 @@ serve(async (req) => {
     const userId = user.id
 
     // GET - List all sessions for the user
+    // Note: Supabase Admin API does not provide a way to list user sessions.
+    // The GoTrueAdminApi only supports: listUsers, getUserById, updateUserById, deleteUser,
+    // inviteUserByEmail, generateLink, createUser, and signOut (which requires a JWT).
+    // We return an empty array with a note that this feature is not available via the Admin API.
     if (req.method === 'GET') {
-      const { data: sessions, error } = await supabaseAdmin.auth.admin.listUserSessions(userId)
+      console.info('Session listing requested but not supported by Supabase Admin API')
       
-      if (error) {
-        console.error('Error listing sessions:', error)
-        return new Response(
-          JSON.stringify({ error: 'Failed to fetch sessions' }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-
-      // Format sessions for frontend
-      const formattedSessions = sessions.map(session => ({
-        id: session.id,
-        device: session.device || 'Unknown Device',
-        browser: session.user_agent ? parseUserAgent(session.user_agent).browser : 'Unknown',
-        os: session.user_agent ? parseUserAgent(session.user_agent).os : 'Unknown',
-        ip: session.ip || 'Unknown',
-        location: session.ip ? await getLocationFromIP(session.ip) : 'Unknown',
-        created_at: session.created_at,
-        last_active: session.updated_at || session.created_at,
-        is_current: false, // Will be determined on frontend by comparing access_token
-      }))
-
       return new Response(
-        JSON.stringify({ sessions: formattedSessions }),
+        JSON.stringify({ 
+          sessions: [],
+          note: 'Session listing is not currently supported by the Supabase Admin API. The admin API does not expose user session data.' 
+        }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // DELETE - Revoke specific session(s)
+    // DELETE - Revoke sessions
+    // The Supabase Admin API only supports revoking ALL sessions for a user via signOut(jwt).
+    // It does NOT support revoking specific sessions by ID.
+    // We use the user's JWT from the Authorization header to call signOut.
     if (req.method === 'DELETE') {
       const body = await req.json()
       const { sessionIds, revokeAll } = body
 
       if (revokeAll) {
-        // Revoke all sessions except current (we can't easily identify current session here)
-        // Supabase doesn't have a direct "revoke all except current" API
-        // We'll revoke all and the user will need to sign in again
-        const { error } = await supabaseAdmin.auth.admin.revokeRefreshTokens(userId)
-        
-        if (error) {
-          console.error('Error revoking all sessions:', error)
+        // Revoke all sessions for the user using their JWT
+        // Note: This will also revoke the current session, requiring the user to sign in again
+        try {
+          const { error } = await supabaseAdmin.auth.admin.signOut(authHeader.replace('Bearer ', ''))
+          
+          if (error) {
+            console.error('Error revoking all sessions:', error)
+            return new Response(
+              JSON.stringify({ error: 'Failed to revoke sessions', details: error.message }),
+              { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+          }
+
           return new Response(
-            JSON.stringify({ error: 'Failed to revoke sessions' }),
+            JSON.stringify({ 
+              success: true, 
+              message: 'All sessions revoked. You will need to sign in again.' 
+            }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        } catch (err) {
+          console.error('Unexpected error revoking sessions:', err)
+          return new Response(
+            JSON.stringify({ error: 'Failed to revoke sessions', details: err instanceof Error ? err.message : 'Unknown error' }),
             { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           )
         }
-
-        return new Response(
-          JSON.stringify({ success: true, message: 'All sessions revoked' }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
       }
 
       if (sessionIds && Array.isArray(sessionIds) && sessionIds.length > 0) {
-        // Revoke specific sessions
-        // Note: Supabase doesn't have a direct API to revoke specific session by ID
-        // The admin API only supports revoking all refresh tokens for a user
-        // For specific session revocation, we'd need to track sessions ourselves
-        // For now, we'll return an error indicating this limitation
+        // Specific session revocation is not supported by Supabase Admin API
         return new Response(
-          JSON.stringify({ error: 'Specific session revocation not yet supported. Use "revoke all" option.' }),
+          JSON.stringify({ 
+            error: 'Specific session revocation is not supported by the Supabase Admin API. Use "revokeAll: true" to revoke all sessions.' 
+          }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
@@ -142,41 +139,8 @@ serve(async (req) => {
   } catch (error) {
     console.error('Unexpected error:', error)
     return new Response(
-      JSON.stringify({ error: 'An unexpected error occurred' }),
+      JSON.stringify({ error: 'An unexpected error occurred', details: error instanceof Error ? error.message : 'Unknown error' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })
-
-// Simple user agent parser
-function parseUserAgent(ua: string) {
-  const browser = ua.includes('Firefox') ? 'Firefox' :
-                  ua.includes('Edg/') ? 'Edge' :
-                  ua.includes('Chrome') ? 'Chrome' :
-                  ua.includes('Safari') ? 'Safari' : 'Unknown'
-  
-  const os = ua.includes('Windows') ? 'Windows' :
-             ua.includes('Mac OS') ? 'macOS' :
-             ua.includes('Linux') ? 'Linux' :
-             ua.includes('Android') ? 'Android' :
-             ua.includes('iOS') ? 'iOS' : 'Unknown'
-  
-  return { browser, os }
-}
-
-// Simple IP location lookup (placeholder - in production use a proper service)
-async function getLocationFromIP(ip: string): Promise<string> {
-  if (ip === 'Unknown' || ip === '::1' || ip.startsWith('127.') || ip.startsWith('192.168.') || ip.startsWith('10.')) {
-    return 'Local Network'
-  }
-  try {
-    const response = await fetch(`https://ipapi.co/${ip}/json/`)
-    const data = await response.json()
-    if (data.city && data.country_name) {
-      return `${data.city}, ${data.country_name}`
-    }
-    return 'Unknown'
-  } catch {
-    return 'Unknown'
-  }
-}

@@ -117,10 +117,13 @@ export function LoginPage() {
     }
   }
 
-  const handleOAuthLogin = async (provider: 'google' | 'microsoft') => {
+  const handleOAuthLogin = async (provider: 'google' | 'azure') => {
     try {
       setSubmitting(true)
       await signInWithOAuth(provider)
+      // Note: signInWithOAuth initiates a redirect to the OAuth provider
+      // The page will unload, so we don't need to handle the success case here
+      // The onAuthStateChange listener in AuthContext will handle the callback
     } catch (error: any) {
       toast.error(error.message || `${provider} login failed`)
       setSubmitting(false)
@@ -329,7 +332,7 @@ export function LoginPage() {
             </Button>
             <Button
               variant="secondary"
-              onClick={() => handleOAuthLogin('microsoft')}
+              onClick={() => handleOAuthLogin('azure')}
               disabled={submitting || authLoading}
               className="gap-2"
             >

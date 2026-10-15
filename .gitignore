@@ -4,3 +4,17 @@ dist/
 .env
 .env.local
 *.log
+
+supabase/.temp/
+.env.*
+!.env.example
+
+# Local recovery and development artifacts
+NEXT_PHASE_REPORT.md
+REPAIR_REPORT.md
+fix_notifications.py
+fix_settings.py
+handlers_to_insert.tsx
+new_return.tsx
+original_settings.tsx
+recovery-backup.patch

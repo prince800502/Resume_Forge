@@ -139,7 +139,7 @@ export function DashboardPage() {
 
   const handleBlackHoleComplete = async () => {
     await signOut()
-    navigate('/login', { replace: true })
+    navigate('/', { replace: true })
     setShowBlackHole(false)
   }
 
@@ -289,7 +289,7 @@ export function DashboardPage() {
           <Button
             variant="ghost"
             fullWidth
-            onClick={() => setShowSettingsModal(true)}
+            onClick={() => navigate('/settings')}
             leftIcon={<Cog6ToothIconSolid className="w-4 h-4" />}
             className="justify-start gap-3"
           >
@@ -381,20 +381,23 @@ export function DashboardPage() {
         onClose={() => setShowCreateModal(false)}
         title="Create New Resume"
         description="Choose a template and give your resume a title"
-        size="lg"
+        size="2xl"
       >
-        <div className="space-y-6">
+        <div className="flex flex-col h-full gap-6">
+          {/* Resume Title Input - Fixed at top */}
           <Input
             label="Resume Title"
             placeholder="e.g., Senior Software Engineer Resume"
             value={newResumeTitle}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewResumeTitle(e.target.value)}
             autoFocus
+            className="flex-shrink-0"
           />
 
-          <div>
-            <label className="label">Select Template</label>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Template Grid - Scrollable Area */}
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <label className="label flex-shrink-0">Select Template</label>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-3">
               {templates.map(template => (
                 <TemplateCard
                   key={template.id}
@@ -406,7 +409,8 @@ export function DashboardPage() {
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border)]">
+          {/* Footer Buttons - Fixed at bottom */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border)] flex-shrink-0">
             <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
               Cancel
             </Button>

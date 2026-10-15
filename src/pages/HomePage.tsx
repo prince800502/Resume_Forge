@@ -1,11 +1,11 @@
-import React, { useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import React, { useRef, useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { gsap } from 'gsap'
 import { 
   ArrowRightIcon, SparklesIcon, ShieldCheckIcon, BoltIcon, CubeIcon, 
   ChartBarIcon, PaintBrushIcon, DocumentTextIcon, MagnifyingGlassIcon,
   ArrowRightOnRectangleIcon, RocketLaunchIcon, CpuChipIcon, GlobeAltIcon,
-  StarIcon, CheckCircleIcon
+  StarIcon, CheckCircleIcon, UserCircleIcon, ChevronDownIcon
 } from '@heroicons/react/24/solid'
 import { 
   ArrowRightIcon as ArrowRightOutline, SparklesIcon as SparklesOutline,
@@ -16,14 +16,38 @@ import {
   CpuChipIcon as CpuChipOutline, GlobeAltIcon as GlobeAltOutline,
   StarIcon as StarOutline, CheckCircleIcon as CheckCircleOutline
 } from '@heroicons/react/24/outline'
-import { Button, Card, Badge } from '@/components/ui'
+import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/contexts/ThemeContext'
+import { Button, Card, Badge, Avatar } from '@/components/ui'
 import { FloatingParticles, MorphingBlobs, PageTransition, StaggerContainer } from '@/components/animations/BlackHoleAnimation'
 
 export function HomePage() {
+  const { user, session, signOut, loading: authLoading } = useAuth()
+  const { toggleTheme, resolvedTheme } = useTheme()
+  const navigate = useNavigate()
+  
   const heroRef = useRef<HTMLDivElement>(null)
   const featuresRef = useRef<HTMLDivElement>(null)
   const templatesRef = useRef<HTMLDivElement>(null)
   const ctaRef = useRef<HTMLDivElement>(null)
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false)
+
+  const handleSignOut = async () => {
+    await signOut()
+    navigate('/', { replace: true })
+  }
+
+  // Close profile menu when clicking outside
+  const profileMenuRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setProfileMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   useEffect(() => {
     const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
@@ -152,14 +176,61 @@ export function HomePage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Link to="/login" className="hidden sm:block">
-                <Button variant="ghost" size="sm">Sign In</Button>
-              </Link>
-              <Link to="/login">
-                <Button variant="primary" size="sm" leftIcon={<ArrowRightIcon className="w-4 h-4" />}>
-                  Get Started
-                </Button>
-              </Link>
+              {authLoading ? (
+                <div className="w-8 h-8 border-2 border-cosmic-500 border-t-transparent rounded-full animate-spin" />
+              ) : user && session ? (
+                <div className="relative" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                    className="flex items-center gap-2 p-1 rounded-lg hover:bg-[var(--muted)] transition-colors"
+                    aria-expanded={profileMenuOpen}
+                    aria-haspopup="true"
+                  >
+                    <Avatar 
+                      src={user.avatar_url} 
+                      name={user.full_name || user.email} 
+                      size="md" 
+                      shape="circle" 
+                    />
+                    <span className="hidden sm:block font-medium text-sm">{user.full_name || user.email.split('@')[0]}</span>
+                    <ChevronDownIcon className={`w-4 h-4 text-[var(--muted-foreground)] transition-transform ${profileMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  {profileMenuOpen && (
+                    <div 
+                      ref={profileMenuRef}
+                      className="absolute right-0 mt-2 w-48 rounded-xl bg-[var(--card)] border border-[var(--card-border)] shadow-lg py-1 z-50 animate-in fade-in-0 zoom-in-95"
+                    >
+                      <a href="/dashboard" className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--muted)]">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                        <span>Dashboard</span>
+                      </a>
+                      <a href="/settings" className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-[var(--muted)]">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
+                        <span>Settings</span>
+                      </a>
+                      <hr className="my-1 border-[var(--border)]" />
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-400 hover:bg-red-500/10"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <Link to="/login" className="hidden sm:block">
+                    <Button variant="ghost" size="sm">Sign In</Button>
+                  </Link>
+                  <Link to="/login">
+                    <Button variant="primary" size="sm" leftIcon={<ArrowRightIcon className="w-4 h-4" />}>
+                      Get Started
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </nav>
@@ -180,9 +251,9 @@ export function HomePage() {
                   Universal ATS Checker now live — upload any resume
                 </div>
 
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-6 bg-gradient-to-r from-white via-cosmic-200 to-nebula-200 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-6 bg-gradient-to-r from-cosmic-400 to-nebula-400 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
                   Build Resumes That{' '}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cosmic-400 to-nebula-400">Get Interviews</span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cosmic-400 to-nebula-400 bg-[length:200%_auto] animate-gradient">Get Interviews</span>
                 </h1>
 
                 <p className="text-lg sm:text-xl text-[var(--muted-foreground)] max-w-2xl mx-auto lg:mx-0 mb-10 leading-relaxed">

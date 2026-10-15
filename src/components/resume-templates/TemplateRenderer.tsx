@@ -18,9 +18,10 @@ export interface TemplateRendererProps {
     text: string
     heading: string
   }
+  isFullPreview?: boolean
 }
 
-export function TemplateRenderer({ data, templateId, colors }: TemplateRendererProps) {
+export function TemplateRenderer({ data, templateId, colors, isFullPreview = false }: TemplateRendererProps) {
   const renderTemplate = () => {
     switch (templateId) {
       case 'modern-1':
@@ -63,22 +64,35 @@ export function TemplateRenderer({ data, templateId, colors }: TemplateRendererP
     '--heading': colors.heading,
   } as React.CSSProperties
 
+  // In full preview mode, use responsive width; otherwise fixed A4 size
+  // In split mode, we need to ensure the preview fits within the container
+  const isSplitMode = !isFullPreview;
+  const previewStyle: React.CSSProperties = {
+    ...resumeVariables,
+    minWidth: isFullPreview ? '100%' : '210mm',
+    maxWidth: isFullPreview ? '210mm' : '210mm',
+    width: isFullPreview ? '100%' : '210mm',
+    // In split mode, ensure the preview scales to fit the container
+    transformOrigin: 'top center',
+  }
+
+  const innerStyle: React.CSSProperties = {
+    backgroundColor: colors.background,
+    color: colors.text,
+    minHeight: isFullPreview ? 'auto' : '297mm',
+    padding: isFullPreview ? '2.5rem' : '2rem 3rem',
+    width: '100%',
+    boxSizing: 'border-box',
+  }
+
   return (
     <div
       className="resume-preview"
-      style={{
-        minWidth: '210mm',
-        maxWidth: '210mm',
-        ...resumeVariables,
-      }}
+      style={previewStyle}
     >
       <div
-        className="p-8 md:p-12"
-        style={{
-          backgroundColor: colors.background,
-          color: colors.text,
-          minHeight: '297mm',
-        }}
+        className="rounded-xl shadow-inner"
+        style={innerStyle}
       >
         {renderTemplate()}
       </div>

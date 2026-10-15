@@ -15,9 +15,6 @@ ON CONFLICT (id) DO UPDATE SET
   file_size_limit = 5242880,
   allowed_mime_types = ARRAY['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
--- Enable RLS on storage.objects (usually enabled by default)
-ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
-
 -- Drop existing policies if they exist (for idempotency)
 DROP POLICY IF EXISTS "Users can upload their own avatar" ON storage.objects;
 DROP POLICY IF EXISTS "Users can update their own avatar" ON storage.objects;

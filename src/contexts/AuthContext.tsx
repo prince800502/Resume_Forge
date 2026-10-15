@@ -7,7 +7,7 @@ interface AuthContextType {
   user: UserType | null
   session: Session | null
   loading: boolean
-  signInWithOAuth: (provider: string) => Promise<void>
+  signInWithOAuth: (provider: 'google' | 'azure') => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<void>
   signUpWithEmail: (email: string, password: string, fullName: string) => Promise<void>
   signOut: () => Promise<void>
@@ -41,6 +41,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         fetchUserProfile(session.user.id)
       } else {
+        // Check for guest user in localStorage
+        try {
+          const storedGuest = localStorage.getItem('guest_user')
+          if (storedGuest) {
+            const guestUser = JSON.parse(storedGuest)
+            setUser(guestUser)
+          }
+        } catch (e) {
+          console.error('Failed to restore guest user:', e)
+        }
         setLoading(false)
       }
     })
@@ -94,16 +104,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signInWithOAuth = useCallback(async (provider: string) => {
+  const signInWithOAuth = useCallback(async (provider: 'google' | 'azure') => {
     const redirectUrl = `${window.location.origin}/auth/callback`
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: provider as any,
-      options: {
-        redirectTo: redirectUrl,
+    
+    // Provider-specific options
+    const providerOptions: Record<string, { scopes?: string; queryParams?: Record<string, string> }> = {
+      google: {
+        scopes: 'email profile',
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
         },
+      },
+      azure: {
+        scopes: 'email',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
+    }
+    
+    const options = providerOptions[provider] || {}
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: redirectUrl,
+        scopes: options.scopes,
+        queryParams: options.queryParams,
       },
     })
     if (error) throw error

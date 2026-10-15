@@ -1,5 +1,5 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
+import { serve } from 'https://deno.land/std@0.224.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,6 +13,13 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { status: 405, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  }
+
   try {
     // Get the authorization header
     const authHeader = req.headers.get('Authorization')
@@ -23,32 +30,37 @@ serve(async (req) => {
       )
     }
 
+    // Validate environment variables
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
+
+    if (!supabaseUrl || !serviceRoleKey || !anonKey) {
+      console.error('Missing required environment variables')
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Create supabase client with service role key (admin privileges)
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    )
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
 
     // Create a client with the user's JWT to verify identity
-    const supabaseUser = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-        global: {
-          headers: { Authorization: authHeader },
-        },
-      }
-    )
+    const supabaseUser = createClient(supabaseUrl, anonKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+      global: {
+        headers: { Authorization: authHeader },
+      },
+    })
 
     // Get the current user from the JWT
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser()
@@ -63,7 +75,16 @@ serve(async (req) => {
     const userId = user.id
 
     // Verify the request body has the confirmation
-    const body = await req.json()
+    let body: { confirmation?: string }
+    try {
+      body = await req.json()
+    } catch {
+      return new Response(
+        JSON.stringify({ error: 'Invalid request body' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     if (body.confirmation !== 'DELETE') {
       return new Response(
         JSON.stringify({ error: 'Invalid confirmation. Must type "DELETE"' }),
@@ -71,8 +92,10 @@ serve(async (req) => {
       )
     }
 
-    // Start a transaction-like cleanup
-    // 1. Delete user's resumes (cascade will handle related data if FK constraints exist)
+    // Track errors but continue cleanup
+    const errors: string[] = []
+
+    // 1. Delete user's resumes
     const { error: resumesError } = await supabaseAdmin
       .from('resumes')
       .delete()
@@ -80,7 +103,7 @@ serve(async (req) => {
     
     if (resumesError) {
       console.error('Error deleting resumes:', resumesError)
-      // Continue anyway, don't fail the whole operation
+      errors.push(`resumes: ${resumesError.message}`)
     }
 
     // 2. Delete user's profile
@@ -91,23 +114,30 @@ serve(async (req) => {
     
     if (profileError) {
       console.error('Error deleting profile:', profileError)
+      errors.push(`profile: ${profileError.message}`)
     }
 
     // 3. Delete user's avatar from storage (if any)
-    // List files in the user's avatar folder
-    const { data: avatarFiles, error: listError } = await supabaseAdmin.storage
-      .from('avatars')
-      .list(userId)
-    
-    if (!listError && avatarFiles && avatarFiles.length > 0) {
-      const filePaths = avatarFiles.map(file => `${userId}/${file.name}`)
-      const { error: storageError } = await supabaseAdmin.storage
+    try {
+      const { data: avatarFiles, error: listError } = await supabaseAdmin.storage
         .from('avatars')
-        .remove(filePaths)
+        .list(userId)
       
-      if (storageError) {
-        console.error('Error deleting avatar files:', storageError)
+      if (!listError && avatarFiles && avatarFiles.length > 0) {
+        const filePaths = avatarFiles.map(file => `${userId}/${file.name}`)
+        const { error: storageError } = await supabaseAdmin.storage
+          .from('avatars')
+          .remove(filePaths)
+        
+        if (storageError) {
+          console.error('Error deleting avatar files:', storageError)
+          errors.push(`storage: ${storageError.message}`)
+        }
       }
+    } catch (storageErr) {
+      // Bucket might not exist or other storage errors
+      console.error('Storage cleanup error:', storageErr)
+      errors.push(`storage: ${storageErr instanceof Error ? storageErr.message : 'Unknown storage error'}`)
     }
 
     // 4. Delete the auth user (this will also revoke all sessions)
@@ -119,6 +149,11 @@ serve(async (req) => {
         JSON.stringify({ error: 'Failed to delete account. Please try again.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
+    }
+
+    // Log any non-fatal errors for debugging
+    if (errors.length > 0) {
+      console.warn('Account deleted with non-fatal errors:', errors)
     }
 
     return new Response(

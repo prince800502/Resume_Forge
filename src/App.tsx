@@ -1,6 +1,7 @@
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { LoginPage } from '@/pages/LoginPage'
+import { AuthCallbackPage } from '@/pages/AuthCallbackPage'
 import { HomePage } from '@/pages/HomePage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { ResumeBuilderPage } from '@/pages/ResumeBuilderPage'
@@ -55,7 +56,7 @@ export default function App() {
         }
       />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/auth/callback" element={<LoginPage />} />
+      <Route path="/auth/callback" element={<AuthCallbackPage />} />
       
       {/* Protected routes - require authentication */}
       <Route

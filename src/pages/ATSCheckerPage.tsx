@@ -26,6 +26,16 @@ import { useResume } from '@/contexts/ResumeContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { calculateATSScore, extractKeywords } from '@/utils/atsScorer'
 import { Button, Card, Badge, Modal, Textarea, Progress, Select, Input, Divider, Toggle } from '@/components/ui'
+import { 
+  RadialGauge, 
+  SectionBarChart, 
+  KeywordDonut, 
+  SkillsMatch, 
+  CompletenessChart, 
+  FormattingReadability, 
+  SectionScores, 
+  JobMatch,
+} from '@/components/ats-checker/ProfessionalCharts'
 import { FloatingParticles, MorphingBlobs, PageTransition, StaggerContainer } from '@/components/animations/BlackHoleAnimation'
 import toast from 'react-hot-toast'
 import { clsx } from 'clsx'
@@ -47,7 +57,7 @@ export function ATSCheckerPage() {
   const [showJobDesc, setShowJobDesc] = useState(true)
   const [result, setResult] = useState<ReturnType<typeof calculateATSScore> | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [activeTab, setActiveTab] = useState<'overview' | 'sections' | 'keywords' | 'suggestions'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'sections' | 'keywords' | 'suggestions' | 'charts'>('overview')
   const [lastAnalyzedResumeId, setLastAnalyzedResumeId] = useState<string | null>(null)
   const [uploadedFileReport, setUploadedFileReport] = useState<{ report: any; fileName: string } | null>(null)
   const [analysisMode, setAnalysisMode] = useState<'upload' | 'saved'>('upload')
@@ -338,6 +348,19 @@ export function ATSCheckerPage() {
     : result.score >= 40 ? 'text-orange-500' 
     : 'text-red-500'
     : 'text-[var(--muted-foreground)]'
+
+  // Prepare data for charts
+  const sectionChartData = result ? result.sections.map(s => ({
+    name: s.name,
+    score: s.score,
+    maxScore: 100,
+  })) : []
+
+  const completenessData = result ? {
+    matched: result.keywords.found.length,
+    missing: result.keywords.missing.length,
+    suggested: result.keywords.suggested.length,
+  } : { matched: 0, missing: 0, suggested: 0 }
 
   return (
     <div className="min-h-screen relative block w-full" style={{ background: 'var(--background)' }}>
@@ -705,6 +728,7 @@ export function ATSCheckerPage() {
                         <div className="flex border-b border-[var(--border)]">
                           {([
                             { id: 'overview', label: 'Overview', icon: <DocumentTextIcon className="w-4 h-4" /> },
+                            { id: 'charts', label: 'Charts', icon: <ChartBarIcon className="w-4 h-4" /> },
                             { id: 'sections', label: 'Sections', icon: <ChartBarIcon className="w-4 h-4" /> },
                             { id: 'keywords', label: 'Keywords', icon: <MagnifyingGlassIcon className="w-4 h-4" /> },
                             { id: 'suggestions', label: 'Suggestions', icon: <LightBulbIcon className="w-4 h-4" /> },
@@ -731,24 +755,43 @@ export function ATSCheckerPage() {
                     {activeTab === 'overview' && result && (
                       <PageTransition>
                         <div className="grid gap-6 lg:grid-cols-3 mb-6">
-                          {/* Score Breakdown */}
-                          <Card variant="glass" padding="lg" className="lg:col-span-2">
-                            <h3 className="text-lg font-semibold mb-4">Score Breakdown</h3>
-                            <div className="space-y-4">
-                              {result.sections.map(section => (
-                                <div key={section.name}>
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="font-medium">{section.name}</span>
-                                    <span className={`font-bold ${section.score >= 80 ? 'text-green-500' : section.score >= 60 ? 'text-yellow-500' : section.score >= 40 ? 'text-orange-500' : 'text-red-500'}`}>
-                                      {section.score}%
-                                    </span>
-                                  </div>
-                                  <Progress value={section.score} max={100} size="md" variant={section.score >= 80 ? 'success' : section.score >= 60 ? 'warning' : section.score >= 40 ? 'warning' : 'default'} />
-                                  <p className="text-xs text-[var(--muted-foreground)] mt-1">{section.feedback[0] || ''}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </Card>
+                          {/* Key Metrics Circular Charts */}
+                          <div className="lg:col-span-3">
+                            <Card variant="glass" padding="lg">
+                              <h3 className="text-lg font-semibold mb-6">Key Metrics</h3>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <RadialGauge
+                                  score={result.score}
+                                  label="ATS Score"
+                                  subtitle={`${result.score}/100`}
+                                  size={140}
+                                  tooltip="Overall ATS compatibility score"
+                                />
+                                <CompletenessChart
+                                  sections={result.sections}
+                                  size={140}
+                                />
+                                <RadialGauge
+                                  score={result.readability.score}
+                                  label="Readability"
+                                  subtitle={result.readability.gradeLevel}
+                                  size={140}
+                                  tooltip={`Reading level: ${result.readability.gradeLevel}, Word count: ${result.readability.wordCount}`}
+                                />
+                              </div>
+                            </Card>
+                          </div>
+
+                          {/* Score Breakdown Bar Chart */}
+                          <div className="lg:col-span-2">
+                            <Card variant="glass" padding="lg">
+                              <h3 className="text-lg font-semibold mb-6">Score Breakdown</h3>
+                              <SectionBarChart
+                                data={sectionChartData}
+                                height={280}
+                              />
+                            </Card>
+                          </div>
 
                           {/* Quick Stats */}
                           <Card variant="glass" padding="lg">
@@ -770,7 +813,7 @@ export function ATSCheckerPage() {
                             <Card variant="glass" padding="lg">
                               <div className="flex items-center gap-2 mb-4">
                                 <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
-                                  <CheckCircleOutline className="w-5 h-5 text-green-500" />
+                                  <CheckCircleIcon className="w-5 h-5 text-green-500" />
                                 </div>
                                 <h3 className="text-lg font-semibold">Strengths</h3>
                               </div>
@@ -778,7 +821,7 @@ export function ATSCheckerPage() {
                                 {result.sections.filter(s => s.score >= 80).length > 0 ? (
                                   result.sections.filter(s => s.score >= 80).map(s => (
                                     <li key={s.name} className="flex items-center gap-2 text-sm">
-                                      <CheckCircleOutline className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                      <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
                                       <span>{s.name}: {s.feedback[0]}</span>
                                     </li>
                                   ))
@@ -791,7 +834,7 @@ export function ATSCheckerPage() {
                             <Card variant="glass" padding="lg">
                               <div className="flex items-center gap-2 mb-4">
                                 <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
-                                  <XCircleOutline className="w-5 h-5 text-red-500" />
+                                  <XCircleIcon className="w-5 h-5 text-red-500" />
                                 </div>
                                 <h3 className="text-lg font-semibold">Missing / Weak Areas</h3>
                               </div>
@@ -799,7 +842,7 @@ export function ATSCheckerPage() {
                                 {result.sections.filter(s => s.score < 60).length > 0 ? (
                                   result.sections.filter(s => s.score < 60).map(s => (
                                     <li key={s.name} className="flex items-center gap-2 text-sm">
-                                      <XCircleOutline className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                      <XCircleIcon className="w-4 h-4 text-red-500 flex-shrink-0" />
                                       <span>{s.name}: {s.feedback[0] || 'Needs improvement'}</span>
                                     </li>
                                   ))
@@ -810,6 +853,184 @@ export function ATSCheckerPage() {
                             </Card>
                           </div>
                         </StaggerContainer>
+                      </PageTransition>
+                    )}
+
+                    {activeTab === 'overview' && result && (
+                      <PageTransition>
+                        <div className="grid gap-6 lg:grid-cols-3 mb-6">
+                          {/* Key Metrics Circular Charts */}
+                          <div className="lg:col-span-3">
+                            <Card variant="glass" padding="lg">
+                              <h3 className="text-lg font-semibold mb-6">Key Metrics</h3>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <RadialGauge
+                                  score={result.score}
+                                  label="ATS Score"
+                                  subtitle={`${result.score}/100`}
+                                  size={140}
+                                  tooltip="Overall ATS compatibility score"
+                                />
+                                <CompletenessChart
+                                  sections={result.sections}
+                                  size={140}
+                                />
+                                <RadialGauge
+                                  score={result.readability.score}
+                                  label="Readability"
+                                  subtitle={result.readability.gradeLevel}
+                                  size={140}
+                                  tooltip={`Reading level: ${result.readability.gradeLevel}, Word count: ${result.readability.wordCount}`}
+                                />
+                              </div>
+                            </Card>
+                          </div>
+
+                          {/* Score Breakdown Bar Chart */}
+                          <div className="lg:col-span-2">
+                            <Card variant="glass" padding="lg">
+                              <h3 className="text-lg font-semibold mb-6">Score Breakdown</h3>
+                              <SectionBarChart
+                                data={sectionChartData}
+                                height={280}
+                              />
+                            </Card>
+                          </div>
+
+                          {/* Quick Stats */}
+                          <Card variant="glass" padding="lg">
+                            <h3 className="text-lg font-semibold mb-4">Quick Stats</h3>
+                            <div className="space-y-3">
+                              <StatItem label="Word Count" value={result.readability.wordCount} />
+                              <StatItem label="Reading Level" value={result.readability.gradeLevel} />
+                              <StatItem label="Sections Complete" value={`${result.sections.filter(s => s.score >= 60).length}/${result.sections.length}`} />
+                              <StatItem label="Matched Keywords" value={`${result.keywords.found.length}/${result.keywords.found.length + result.keywords.missing.length}`} />
+                              <StatItem label="Missing Keywords" value={result.keywords.missing.length} />
+                              <StatItem label="Suggestions" value={result.suggestions.length} />
+                            </div>
+                          </Card>
+                        </div>
+
+                        {/* Strengths & Missing */}
+                        <StaggerContainer stagger={0.1} direction="up">
+                          <div className="grid gap-6 lg:grid-cols-2 mb-6">
+                            <Card variant="glass" padding="lg">
+                              <div className="flex items-center gap-2 mb-4">
+                                <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
+                                  <CheckCircleIcon className="w-5 h-5 text-green-500" />
+                                </div>
+                                <h3 className="text-lg font-semibold">Strengths</h3>
+                              </div>
+                              <ul className="space-y-2">
+                                {result.sections.filter(s => s.score >= 80).length > 0 ? (
+                                  result.sections.filter(s => s.score >= 80).map(s => (
+                                    <li key={s.name} className="flex items-center gap-2 text-sm">
+                                      <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
+                                      <span>{s.name}: {s.feedback[0]}</span>
+                                    </li>
+                                  ))
+                                ) : (
+                                  <li className="text-sm text-[var(--muted-foreground)]">Run analysis to see strengths</li>
+                                )}
+                              </ul>
+                            </Card>
+
+                            <Card variant="glass" padding="lg">
+                              <div className="flex items-center gap-2 mb-4">
+                                <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
+                                  <XCircleIcon className="w-5 h-5 text-red-500" />
+                                </div>
+                                <h3 className="text-lg font-semibold">Missing / Weak Areas</h3>
+                              </div>
+                              <ul className="space-y-2">
+                                {result.sections.filter(s => s.score < 60).length > 0 ? (
+                                  result.sections.filter(s => s.score < 60).map(s => (
+                                    <li key={s.name} className="flex items-center gap-2 text-sm">
+                                      <XCircleIcon className="w-4 h-4 text-red-500 flex-shrink-0" />
+                                      <span>{s.name}: {s.feedback[0] || 'Needs improvement'}</span>
+                                    </li>
+                                  ))
+                                ) : (
+                                  <li className="text-sm text-[var(--muted-foreground)]">No critical gaps found!</li>
+                                )}
+                              </ul>
+                            </Card>
+                          </div>
+                        </StaggerContainer>
+                      </PageTransition>
+                    )}
+
+                    {/* Charts Tab - New Visualizations */}
+                    {activeTab === 'charts' && result && (
+                      <PageTransition>
+                        <div className="space-y-6">
+                          {/* Formatting & Readability Circular Charts */}
+                          <Card variant="glass" padding="lg">
+                            <h3 className="text-lg font-semibold mb-6">Formatting & Readability</h3>
+                            <FormattingReadability
+                              formattingScore={result.formatting.score}
+                              readabilityScore={result.readability.score}
+                              gradeLevel={result.readability.gradeLevel}
+                              wordCount={result.readability.wordCount}
+                              size={120}
+                            />
+                          </Card>
+
+                          {/* Keyword Match Circular Chart */}
+                          {jobDescription && (
+                            <React.Fragment>
+                              <Card variant="glass" padding="lg">
+                                <h3 className="text-lg font-semibold mb-6">Job Description Keyword Match</h3>
+                                <KeywordDonut
+                                  matched={result.keywords.found.length}
+                                  missing={result.keywords.missing.length}
+                                  suggested={result.keywords.suggested.length}
+                                  size={200}
+                                />
+                              </Card>
+
+                              <Card variant="glass" padding="lg">
+                                <h3 className="text-lg font-semibold mb-6">Skills Match</h3>
+                                <SkillsMatch
+                                  resumeSkills={result.sections.find(s => s.name === 'Skills') ? [] : []}
+                                  jobDescriptionSkills={result.keywords.found}
+                                  size={120}
+                                />
+                              </Card>
+                            </React.Fragment>
+                          )}
+
+                          {/* Section Scores Chart */}
+                          <Card variant="glass" padding="lg">
+                            <h3 className="text-lg font-semibold mb-6">Section Scores</h3>
+                            <SectionScores
+                              sections={result.sections}
+                            />
+                          </Card>
+
+                          {/* Content Distribution */}
+                          <Card variant="glass" padding="lg">
+                            <h3 className="text-lg font-semibold mb-6">Content Distribution</h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                              <div className="p-4 rounded-xl bg-[var(--muted)] text-center">
+                                <div className="text-2xl font-bold text-[var(--foreground)]">{result.readability.wordCount.toLocaleString()}</div>
+                                <div className="text-xs text-[var(--muted-foreground)]">Words</div>
+                              </div>
+                              <div className="p-4 rounded-xl bg-[var(--muted)] text-center">
+                                <div className="text-2xl font-bold text-[var(--foreground)]">{resume?.data.experience?.length || 0}</div>
+                                <div className="text-xs text-[var(--muted-foreground)]">Experience Entries</div>
+                              </div>
+                              <div className="p-4 rounded-xl bg-[var(--muted)] text-center">
+                                <div className="text-2xl font-bold text-[var(--foreground)]">{resume?.data.projects?.length || 0}</div>
+                                <div className="text-xs text-[var(--muted-foreground)]">Projects</div>
+                              </div>
+                              <div className="p-4 rounded-xl bg-[var(--muted)] text-center">
+                                <div className="text-2xl font-bold text-[var(--foreground)]">{resume?.data.skills?.length || 0}</div>
+                                <div className="text-xs text-[var(--muted-foreground)]">Skills</div>
+                              </div>
+                            </div>
+                          </Card>
+                        </div>
                       </PageTransition>
                     )}
 
@@ -828,65 +1049,50 @@ export function ATSCheckerPage() {
                     {activeTab === 'keywords' && result && (
                       <PageTransition>
                         <StaggerContainer stagger={0.05} direction="up">
-                          <div className="grid gap-6 lg:grid-cols-2 mb-6">
-                            {/* Matched Keywords */}
-                            <Card variant="glass" padding="lg">
-                              <div className="flex items-center gap-2 mb-4">
-                                <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
-                                  <CheckCircleOutline className="w-5 h-5 text-green-500" />
-                                </div>
-                                <h3 className="text-lg font-semibold">Matched Keywords ({result.keywords.found.length})</h3>
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                {result.keywords.found.length > 0 ? (
-                                  result.keywords.found.map(kw => (
-                                    <Badge key={kw} variant="success" size="sm">{kw}</Badge>
-                                  ))
-                                ) : (
-                                  <p className="text-[var(--muted-foreground)]">No matched keywords. Add a job description to compare.</p>
-                                )}
-                              </div>
-                            </Card>
+                          {jobDescription ? (
+                            <React.Fragment>
+                              {/* Job Match Chart */}
+                              <JobMatch
+                                matchPercentage={result.keywords.found.length + result.keywords.missing.length > 0 
+                                  ? Math.round((result.keywords.found.length / (result.keywords.found.length + result.keywords.missing.length)) * 100) 
+                                  : 0}
+                                matchedKeywords={result.keywords.found}
+                                missingKeywords={result.keywords.missing}
+                                suggestedKeywords={result.keywords.suggested}
+                              />
 
-                            {/* Missing Keywords */}
-                            <Card variant="glass" padding="lg">
-                              <div className="flex items-center gap-2 mb-4">
-                                <div className="w-8 h-8 rounded-lg bg-red-500/20 flex items-center justify-center">
-                                  <XCircleOutline className="w-5 h-5 text-red-500" />
-                                </div>
-                                <h3 className="text-lg font-semibold">Missing Keywords ({result.keywords.missing.length})</h3>
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                {result.keywords.missing.length > 0 ? (
-                                  result.keywords.missing.map(kw => (
-                                    <Badge key={kw} variant="danger" size="sm">{kw}</Badge>
-                                  ))
-                                ) : (
-                                  <p className="text-[var(--muted-foreground)]">No missing keywords - great job!</p>
-                                )}
-                              </div>
-                            </Card>
-                          </div>
-
-                          {/* Suggested Keywords */}
-                          {result.keywords.suggested.length > 0 && (
-                            <Card variant="glass" padding="lg" className="mb-6">
-                              <div className="flex items-center gap-2 mb-4">
-                                <div className="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center">
-                                  <ExclamationTriangleOutline className="w-5 h-5 text-yellow-500" />
-                                </div>
-                                <h3 className="text-lg font-semibold">Suggested Keywords to Add ({result.keywords.suggested.length})</h3>
-                              </div>
-                              <div className="flex flex-wrap gap-2">
-                                {result.keywords.suggested.map(kw => (
-                                  <Badge key={kw} variant="warning" size="sm">{kw}</Badge>
-                                ))}
-                              </div>
-                              <p className="mt-3 text-sm text-[var(--muted-foreground)]">
-                                These keywords appear in the job description but not in your resume. Consider adding them naturally to your skills, experience, or summary.
+                              {/* Suggested Keywords */}
+                              {result.keywords.suggested.length > 0 && (
+                                <Card variant="glass" padding="lg" className="mb-6">
+                                  <div className="flex items-center gap-2 mb-4">
+                                    <div className="w-8 h-8 rounded-lg bg-yellow-500/20 flex items-center justify-center">
+                                      <ExclamationTriangleOutline className="w-5 h-5 text-yellow-500" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold">Suggested Keywords to Add ({result.keywords.suggested.length})</h3>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {result.keywords.suggested.map(kw => (
+                                      <Badge key={kw} variant="warning" size="sm" className="cursor-pointer hover:opacity-80" onClick={() => {}}>
+                                        + {kw}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                  <p className="mt-3 text-sm text-[var(--muted-foreground)]">
+                                    These keywords appear in the job description but not in your resume. Consider adding them naturally to your skills, experience, or summary.
+                                  </p>
+                                </Card>
+                              )}
+                            </React.Fragment>
+                          ) : (
+                            <div className="text-center py-12">
+                              <MagnifyingGlassIcon className="w-16 h-16 mx-auto mb-4 text-cosmic-500/50" />
+                              <h3 className="text-xl font-semibold mb-2">Add a Job Description</h3>
+                              <p className="text-[var(--muted-foreground)] mb-6">
+                                Paste a job description above to see keyword matching analysis, circular charts, and detailed keyword breakdowns.
                               </p>
-                            </Card>
-                          )}
+                            </div>
+                          )
+                          }
                         </StaggerContainer>
                       </PageTransition>
                     )}

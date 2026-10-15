@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { gsap } from 'gsap'
 import { 
   ArrowLeftIcon, 
   SparklesIcon,
   ChevronDownIcon, ChevronUpIcon,
-  EyeIcon
+  EyeIcon,
+  XMarkIcon
 } from '@heroicons/react/24/outline'
 import { 
   ArrowPathIcon, ArrowDownTrayIcon, 
@@ -20,10 +21,12 @@ import { ResumePreview } from '@/components/resume-builder/ResumePreview'
 import { TemplateRenderer, TEMPLATE_METADATA, getTemplateById } from '@/components/resume-templates/TemplateRenderer'
 import { Button, Card, Modal, Select, Badge, Toggle, Input } from '@/components/ui'
 import { FloatingParticles, MorphingBlobs, PageTransition } from '@/components/animations/BlackHoleAnimation'
+import { AISuggestionsPanel } from '@/components/ai-assistant/AISuggestionsPanel'
 import toast from 'react-hot-toast'
 import { clsx } from 'clsx'
 import html2canvas from 'html2canvas'
 import { jsPDF } from 'jspdf'
+import { exportResumeToDocx, getSafeFileName as getDocxSafeFileName, triggerDownload } from '@/utils/docxExport'
 
 interface ResumeBuilderPageProps {}
 
@@ -31,7 +34,7 @@ export function ResumeBuilderPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { 
-    currentResume, 
+    currentResume: contextCurrentResume, 
     resumes, 
     updateResume, 
     updateResumeData, 
@@ -44,61 +47,127 @@ export function ResumeBuilderPage() {
   const [viewMode, setViewMode] = useState<'split' | 'editor' | 'preview'>('split')
   const [showTemplateModal, setShowTemplateModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
-  const [exportFormat, setExportFormat] = useState<'pdf' | 'png' | 'json'>('pdf')
+  const [exportFormat, setExportFormat] = useState<'pdf' | 'png' | 'json' | 'docx'>('pdf')
   const [isExporting, setIsExporting] = useState(false)
   const [autoSaveStatus, setAutoSaveStatus] = useState<'saved' | 'saving' | 'pending'>('saved')
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [targetRole, setTargetRole] = useState('')
+  const [jobDescription, setJobDescription] = useState('')
+  const [showAIDrawer, setShowAIDrawer] = useState(false)
   
   const previewRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
+  const drawerRef = useRef<HTMLDivElement>(null)
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
   
-  // Use a ref to always have access to the latest resume data
-  const resumeRef = useRef<typeof currentResume>(currentResume)
+  // Refs for latest values without triggering re-renders
   const resumesRef = useRef(resumes)
   const activeTemplateIdRef = useRef(activeTemplateId)
+  const updateResumeRef = useRef(updateResume)
   
   // Keep refs in sync
-  useEffect(() => { resumeRef.current = currentResume }, [currentResume])
   useEffect(() => { resumesRef.current = resumes }, [resumes])
   useEffect(() => { activeTemplateIdRef.current = activeTemplateId }, [activeTemplateId])
-
-  // Get current resume data - prioritize currentResume, then find by ID
-  const resume = currentResume || resumes.find(r => r.id === id)
+  useEffect(() => { updateResumeRef.current = updateResume }, [updateResume])
+  
+  // Resolve resume from URL parameter - this is the authoritative source
+  const resume = useMemo(() => 
+    resumes.find(r => r.id === id), 
+    [resumes, id]
+  )
+  
+  // If resume not found, navigate to dashboard
+  if (!resume) {
+    useEffect(() => {
+      if (!loading) {
+        navigate('/dashboard', { replace: true })
+      }
+    }, [loading, resume, navigate])
+    
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
+          <div className="w-8 h-8 border-4 border-cosmic-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      )
+    }
+    
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
+        <Card variant="glass" padding="lg" className="max-w-md text-center">
+          <SparklesIcon className="w-12 h-12 mx-auto mb-4 text-cosmic-500" />
+          <h2 className="text-2xl font-bold mb-2">Resume Not Found</h2>
+          <p className="text-[var(--muted-foreground)] mb-6">
+            The resume you're looking for doesn't exist or has been deleted.
+          </p>
+          <Button variant="primary" onClick={() => navigate('/dashboard')} leftIcon={<ArrowLeftIcon className="w-4 h-4" />}>
+            Back to Dashboard
+          </Button>
+        </Card>
+      </div>
+    )
+  }
+  
+  // Sync context's currentResume with route resume when it changes
+  useEffect(() => {
+    if (resume && resume !== contextCurrentResume) {
+      setCurrentResume(resume)
+    }
+  }, [resume, contextCurrentResume, setCurrentResume])
+  
+  // Memoize resume data to provide stable reference to ResumeEditor
+  // Only updates when actual data content changes, not object reference
+  const resumeData = useMemo(() => resume?.data ?? {
+    personal: { firstName: '', lastName: '', email: '', phone: '', location: '', website: '', linkedin: '', github: '', portfolio: '', title: '' },
+    summary: '',
+    experience: [],
+    education: [],
+    skills: [],
+    projects: [],
+    certifications: [],
+    languages: [],
+    custom_sections: [],
+  }, [resume?.data])
+  
   const templateMeta = getTemplateById(activeTemplateId as any)
   const templateColors = templateMeta?.colors || TEMPLATE_METADATA[0].colors
-
-  // Sync template when resume changes
+  
+  // Sync template when resume changes - only run when resume data actually changes
   useEffect(() => {
     if (resume && resume.template_id !== activeTemplateId) {
       setActiveTemplateId(resume.template_id)
     }
-  }, [resume, activeTemplateId])
-
-  // Initialize template from resume
+  }, [resume?.template_id, activeTemplateId])
+  
+  // Initialize template from resume - only on mount/resume change
   useEffect(() => {
     if (resume) {
       setActiveTemplateId(resume.template_id)
     }
-  }, [resume])
+  }, [resume?.id])
 
+  // Track the last saved data revision to prevent stale overwrites
+  const saveRevisionRef = useRef(0)
+  
   // Handle data changes with immediate local updates and debounced persistence
   const handleDataChange = useCallback((data: Partial<any>) => {
-    const current = resumeRef.current || resumesRef.current.find(r => r.id === id)
-    if (!current) return
+    // Use the resume from the route parameter - this is the authoritative source
+    if (!resume) return
 
     const updatedData = {
-      ...current.data,
+      ...resume.data,
       ...data,
     }
 
-    const updates = {
-      data: updatedData,
-      template_id: activeTemplateIdRef.current,
+    // Only include template_id in updates if it actually changed
+    const templateId = activeTemplateIdRef.current
+    const updates: any = { data: updatedData }
+    if (resume.template_id !== templateId) {
+      updates.template_id = templateId
     }
 
     // Update the UI immediately without making a database request.
-    void updateResume(current.id, updates, { persist: false })
+    void updateResumeRef.current(resume.id, updates, { persist: false })
 
     setAutoSaveStatus('pending')
 
@@ -106,38 +175,105 @@ export function ResumeBuilderPage() {
       clearTimeout(autoSaveTimeoutRef.current)
     }
 
+    // Increment revision to track this save cycle
+    const thisRevision = ++saveRevisionRef.current
+
     // Save only after the user stops typing for 800ms.
     autoSaveTimeoutRef.current = setTimeout(async () => {
+      // Check if a newer revision has started - if so, skip this save
+      if (thisRevision !== saveRevisionRef.current) {
+        return
+      }
+      
       try {
         setAutoSaveStatus('saving')
 
-        await updateResume(current.id, updates, { persist: true })
-
-        setAutoSaveStatus('saved')
-        setLastSaved(new Date())
-
-        // No success toast for every keystroke.
+        await updateResumeRef.current(resume.id, updates, { persist: true })
+        
+        // Only update status if this is still the latest revision
+        if (thisRevision === saveRevisionRef.current) {
+          setAutoSaveStatus('saved')
+          setLastSaved(new Date())
+        }
       } catch (error) {
         console.error('Auto-save failed:', error)
-        setAutoSaveStatus('saved')
-        toast.error('Failed to save changes', { duration: 2000 })
+        if (thisRevision === saveRevisionRef.current) {
+          setAutoSaveStatus('saved')
+          toast.error('Failed to save changes', { duration: 2000 })
+        }
       }
     }, 800)
-  }, [id, updateResume])
+  }, [])
 
   // Handle template change
-  const handleTemplateChange = async (newTemplateId: string) => {
+  const handleTemplateChange = useCallback(async (newTemplateId: string) => {
     setActiveTemplateId(newTemplateId)
-    const current = resumeRef.current || resumesRef.current.find(r => r.id === id)
-    if (current) {
-      try {
-        await updateResume(current.id, { template_id: newTemplateId })
-        toast.success('Template changed')
-      } catch (error) {
-        toast.error('Failed to change template')
-      }
+    if (!resume) return
+    try {
+      await updateResumeRef.current(resume.id, { template_id: newTemplateId })
+      toast.success('Template changed')
+    } catch (error) {
+      toast.error('Failed to change template')
     }
-  }
+  }, [])
+
+  // AI Suggestion handlers
+  const handleApplySummary = useCallback((summary: string) => {
+    handleDataChange({ summary })
+  }, [handleDataChange])
+
+  const handleApplyBullets = useCallback((
+    sectionType: 'experience' | 'projects',
+    itemId: string,
+    bullets: string[]
+  ) => {
+    if (!resume) return
+
+    if (sectionType === 'experience') {
+      const updatedExperience = resume.data.experience.map((exp: any) =>
+        exp.id === itemId ? { ...exp, description: bullets } : exp
+      )
+      handleDataChange({ experience: updatedExperience })
+    } else {
+      const updatedProjects = resume.data.projects.map((proj: any) =>
+        proj.id === itemId ? { ...proj, highlights: bullets } : proj
+      )
+      handleDataChange({ projects: updatedProjects })
+    }
+  }, [handleDataChange, resume])
+
+  const handleApplySkills = useCallback((skills: string[]) => {
+    if (!resume) return
+
+    const newSkills = skills.map(name => ({
+      id: `skill_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      name,
+      category: 'technical' as const,
+      proficiency: 'intermediate' as const,
+    }))
+
+    handleDataChange({ skills: [...resume.data.skills, ...newSkills] })
+  }, [handleDataChange, resume])
+
+  const handleApplyText = useCallback((field: string, value: string) => {
+    if (!resume) return
+
+    if (field === 'summary') {
+      handleDataChange({ summary: value })
+    } else if (field.startsWith('experience-')) {
+      const expId = field.replace('experience-', '')
+      const updatedExperience = resume.data.experience.map((exp: any) =>
+        exp.id === expId ? { ...exp, description: value.split('\n').filter(Boolean) } : exp
+      )
+      handleDataChange({ experience: updatedExperience })
+    } else if (field.startsWith('project-')) {
+      const projId = field.replace('project-', '')
+      const updatedProjects = resume.data.projects.map((proj: any) =>
+        proj.id === projId ? { ...proj, description: value } : proj
+      )
+      handleDataChange({ projects: updatedProjects })
+    }
+  }, [handleDataChange, resume])
 
   // Export functions
   const getExportElement = () => {
@@ -276,7 +412,7 @@ export function ResumeBuilderPage() {
   }
 
   const exportAsPDF = async () => {
-    const current = resumeRef.current || resumesRef.current.find(r => r.id === id)
+    const current = resume
     const exportElement = getExportElement()
 
     if (!exportElement || !current) {
@@ -326,7 +462,7 @@ export function ResumeBuilderPage() {
   }
 
   const exportAsPNG = async () => {
-    const current = resumeRef.current || resumesRef.current.find(r => r.id === id)
+    const current = resume
     const exportElement = getExportElement()
 
     if (!exportElement || !current) {
@@ -371,7 +507,7 @@ export function ResumeBuilderPage() {
   }
 
   const exportAsJSON = () => {
-    const current = resumeRef.current || resumesRef.current.find(r => r.id === id)
+    const current = resume
     if (!current) return
 
     const blob = new Blob([JSON.stringify(current, null, 2)], {
@@ -395,6 +531,32 @@ export function ResumeBuilderPage() {
     setShowExportModal(false)
   }
 
+  const exportAsDOCX = async () => {
+    const current = resume
+    if (!current) {
+      toast.error('Resume not found')
+      return
+    }
+
+    setIsExporting(true)
+
+    try {
+      const blob = await exportResumeToDocx(current.data, {
+        templateId: activeTemplateIdRef.current,
+        colors: templateColors,
+      })
+
+      triggerDownload(blob, getDocxSafeFileName(current.title, 'docx'))
+      toast.success('Word document downloaded successfully')
+    } catch (error) {
+      console.error('DOCX export error:', error)
+      toast.error('Failed to export Word document. Please try again.')
+    } finally {
+      setIsExporting(false)
+      setShowExportModal(false)
+    }
+  }
+
   const handleExport = () => {
     switch (exportFormat) {
       case 'pdf':
@@ -405,6 +567,9 @@ export function ResumeBuilderPage() {
         break
       case 'json':
         exportAsJSON()
+        break
+      case 'docx':
+        void exportAsDOCX()
         break
     }
   }
@@ -467,6 +632,9 @@ export function ResumeBuilderPage() {
 
   const layout = viewModeLayouts[viewMode]
 
+  // Full preview mode detection
+  const isFullPreview = viewMode === 'preview'
+
   return (
     <div className="min-h-screen relative flex flex-col" style={{ background: 'var(--background)' }}>
       {/* Animated Background */}
@@ -479,67 +647,83 @@ export function ResumeBuilderPage() {
       <header className="sticky top-0 z-40 bg-[var(--background)]/90 backdrop-blur-xl border-b border-[var(--border)]">
         <div className="max-w-full mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Left: Navigation & Title */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 w-full sm:w-auto flex-wrap gap-2">
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={() => navigate('/dashboard')}
               leftIcon={<ArrowLeftIcon className="w-4 h-4" />}
-              className="hidden sm:flex"
+              className="flex-1 sm:flex-none min-w-0"
             >
-              Dashboard
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate('/dashboard')}
-              className="sm:hidden p-2"
-              aria-label="Back to Dashboard"
-            >
-              <ArrowLeftIcon className="w-5 h-5" />
+              <span className="hidden sm:inline">Dashboard</span>
+              <span className="sm:hidden" aria-label="Dashboard"><ArrowLeftIcon className="w-4 h-4" /></span>
             </Button>
             
-            <div className="hidden sm:block">
-              <h1 className="font-bold text-lg" style={{ color: 'var(--foreground)' }}>{resume.title}</h1>
-              <p className="text-xs text-[var(--muted-foreground)]">{resume.template_id}</p>
+            <div className="hidden sm:block flex-1 min-w-0">
+              <h1 className="font-bold text-lg truncate" style={{ color: 'var(--foreground)' }}>{resume.title}</h1>
+              <p className="text-xs text-[var(--muted-foreground)] truncate">{resume.template_id}</p>
+            </div>
+            <div className="sm:hidden flex-1 min-w-0">
+              <h1 className="font-bold text-base truncate" style={{ color: 'var(--foreground)' }}>{resume.title}</h1>
             </div>
           </div>
 
-          {/* Center: View Mode & Template */}
-          <div className="flex flex-col sm:flex-row items-center gap-3">
+          {/* Center: View Mode, Template, AI Inputs */}
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto flex-wrap gap-2">
             {/* View Mode Toggle */}
-            <div className="flex bg-[var(--muted)] rounded-lg p-1" role="group" aria-label="View mode">
+            <div className="flex bg-[var(--muted)] rounded-lg p-1 w-full sm:w-auto" role="group" aria-label="View mode">
               {(['split', 'editor', 'preview'] as const).map(mode => (
                 <button
                   key={mode}
                   onClick={() => setViewMode(mode)}
                   className={clsx(
-                    'px-3 py-1.5 text-sm font-medium rounded-md transition-all',
+                    'px-3 py-1.5 text-sm font-medium rounded-md transition-all min-w-[80px] sm:min-w-[90px]',
                     viewMode === mode
                       ? 'bg-[var(--card)] text-[var(--foreground)] shadow-sm'
                       : 'text-[var(--muted-foreground)] hover:text-[var(--foreground)]'
                   )}
                   aria-pressed={viewMode === mode}
                 >
-                  {mode === 'split' && <MagnifyingGlassPlusIcon className="w-4 h-4" />}
-                  {mode === 'editor' && <DocumentTextIcon className="w-4 h-4" />}
-                  {mode === 'preview' && <EyeIcon className="w-4 h-4" />}
+                  <span className="flex items-center gap-1.5">
+                    {mode === 'split' && <MagnifyingGlassPlusIcon className="w-4 h-4" />}
+                    {mode === 'editor' && <DocumentTextIcon className="w-4 h-4" />}
+                    {mode === 'preview' && <EyeIcon className="w-4 h-4" />}
+                    <span className="hidden xs:inline">{mode === 'split' ? 'Split' : mode === 'editor' ? 'Edit' : 'View'}</span>
+                  </span>
                 </button>
               ))}
             </div>
 
             {/* Template Selector */}
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <Button 
                 variant="secondary" 
                 size="sm"
                 onClick={() => setShowTemplateModal(true)}
                 leftIcon={<SparklesIcon className="w-4 h-4" />}
-                className="gap-2"
+                className="gap-2 w-full sm:w-auto"
               >
-                <span className="hidden sm:inline">{templateMeta?.name || activeTemplateId}</span>
-                <ChevronDownIcon className="w-4 h-4" />
+                <span className="truncate">{templateMeta?.name || activeTemplateId}</span>
+                <ChevronDownIcon className="w-4 h-4 flex-shrink-0" />
               </Button>
+            </div>
+
+            {/* Target Role Input for AI */}
+            <div className="hidden xs:flex items-center gap-2 w-full sm:w-auto">
+              <Input
+                type="text"
+                placeholder="Target role (e.g., Senior Software Engineer)"
+                value={targetRole}
+                onChange={(e) => setTargetRole(e.target.value)}
+                className="flex-1 min-w-[140px] max-w-[200px]"
+              />
+              <Input
+                type="text"
+                placeholder="Or paste job description..."
+                value={jobDescription}
+                onChange={(e) => setJobDescription(e.target.value)}
+                className="flex-1 min-w-[160px] max-w-[240px]"
+              />
             </div>
 
             {/* ATS Check Button */}
@@ -548,7 +732,7 @@ export function ResumeBuilderPage() {
               size="sm"
               onClick={() => navigate(`/ats-checker/${resume.id}`)}
               leftIcon={<DocumentMagnifyingGlassIcon className="w-4 h-4" />}
-              className="hidden sm:flex gap-2"
+              className="hidden xs:flex gap-2"
             >
               ATS Check
             </Button>
@@ -556,15 +740,35 @@ export function ResumeBuilderPage() {
               variant="primary" 
               size="sm"
               onClick={() => navigate(`/ats-checker/${resume.id}`)}
-              className="sm:hidden p-2"
+              className="xs:hidden p-2"
               aria-label="Run ATS Check"
             >
               <DocumentMagnifyingGlassIcon className="w-5 h-5" />
             </Button>
+
+            {/* AI Suggestions Panel Toggle */}
+            <Button 
+              variant="secondary" 
+              size="sm"
+              onClick={() => setShowAIDrawer(!showAIDrawer)}
+              leftIcon={<SparklesIcon className="w-4 h-4" />}
+              className={clsx('hidden xs:flex gap-2', showAIDrawer && 'bg-cosmic-500/10 border-cosmic-500/50')}
+            >
+              AI Suggestions
+            </Button>
+            <Button 
+              variant="secondary" 
+              size="sm"
+              onClick={() => setShowAIDrawer(!showAIDrawer)}
+              className={clsx('xs:hidden p-2', showAIDrawer && 'bg-cosmic-500/10 border-cosmic-500/50')}
+              aria-label="Toggle AI Suggestions"
+            >
+              <SparklesIcon className="w-5 h-5" />
+            </Button>
           </div>
 
           {/* Right: Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Auto-save indicator */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--muted)]">
               <span className={clsx(
@@ -573,7 +777,7 @@ export function ResumeBuilderPage() {
                 autoSaveStatus === 'saving' && 'bg-yellow-500 animate-pulse',
                 autoSaveStatus === 'pending' && 'bg-blue-500 animate-pulse'
               )} />
-              <span className="text-xs text-[var(--muted-foreground)]">
+              <span className="text-xs text-[var(--muted-foreground)] whitespace-nowrap">
                 {autoSaveStatus === 'saved' 
                   ? lastSaved 
                     ? `Saved ${lastSaved.toLocaleTimeString()}` 
@@ -590,7 +794,7 @@ export function ResumeBuilderPage() {
               size="sm"
               onClick={() => setShowExportModal(true)}
               leftIcon={<ArrowDownTrayIcon className="w-4 h-4" />}
-              className="hidden sm:flex"
+              className="hidden xs:flex gap-2"
             >
               Export
             </Button>
@@ -598,7 +802,7 @@ export function ResumeBuilderPage() {
               variant="secondary" 
               size="sm"
               onClick={() => setShowExportModal(true)}
-              className="sm:hidden p-2"
+              className="xs:hidden p-2"
               aria-label="Export"
             >
               <ArrowDownTrayIcon className="w-5 h-5" />
@@ -606,6 +810,46 @@ export function ResumeBuilderPage() {
           </div>
         </div>
       </header>
+
+      {/* Mobile AI Inputs Bar - improved responsive layout */}
+      <div className="xs:hidden sm:hidden border-t border-[var(--border)] bg-[var(--background)]/90 backdrop-blur-xl px-4 py-3">
+        <div className="space-y-2 max-w-md mx-auto">
+          <Input
+            type="text"
+            placeholder="Target role (e.g., Senior Software Engineer)"
+            value={targetRole}
+            onChange={(e) => setTargetRole(e.target.value)}
+            className="w-full"
+          />
+          <Input
+            type="text"
+            placeholder="Or paste job description..."
+            value={jobDescription}
+            onChange={(e) => setJobDescription(e.target.value)}
+            className="w-full"
+          />
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button 
+              variant="secondary" 
+              size="sm"
+              onClick={() => setShowAIDrawer(!showAIDrawer)}
+              leftIcon={<SparklesIcon className="w-4 h-4" />}
+              className="flex-1"
+            >
+              AI Suggestions
+            </Button>
+            <Button 
+              variant="primary" 
+              size="sm"
+              onClick={() => navigate(`/ats-checker/${resume.id}`)}
+              leftIcon={<DocumentMagnifyingGlassIcon className="w-4 h-4" />}
+              className="flex-1"
+            >
+              ATS Check
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {/* Main Content */}
       <main className="flex-1 w-full min-w-0 p-4 lg:p-6 overflow-y-auto">
@@ -615,14 +859,14 @@ export function ResumeBuilderPage() {
             <aside 
               ref={editorRef}
               className={clsx(
-                'flex-1 min-w-0',
+                'flex-1 min-w-0 w-full lg:max-w-2xl',
                 layout.editor
               )}
             >
               <div className="sticky top-20 space-y-6">
                 <PageTransition>
                   <ResumeEditor 
-                    data={resume.data}
+                    data={resumeData}
                     onChange={handleDataChange}
                     templateId={activeTemplateId}
                   />
@@ -634,16 +878,22 @@ export function ResumeBuilderPage() {
             <aside 
               ref={previewRef}
               className={clsx(
-                'flex-1 min-w-0',
+                'w-full lg:flex-1 min-w-0',
                 layout.preview
               )}
             >
-              <div className="sticky top-20">
+              <div className={clsx(
+                'transition-all duration-300',
+                isFullPreview 
+                  ? 'flex items-start justify-center p-4 lg:p-8 min-h-[calc(100vh-8rem)]' 
+                  : 'h-[calc(100vh-5rem)] overflow-y-auto'
+              )}>
                 <PageTransition>
                   <ResumePreview 
-                    data={resume.data}
+                    data={resumeData}
                     templateId={activeTemplateId}
                     colors={templateColors}
+                    isFullPreview={isFullPreview}
                   />
                 </PageTransition>
               </div>
@@ -689,6 +939,7 @@ export function ResumeBuilderPage() {
           <div className="grid gap-3">
             {[
               { value: 'pdf', label: 'PDF Document', desc: 'Best for applications and printing', icon: <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a4 4 0 004-4V8a4 4 0 10-8 0v6a4 4 0 004 4z" /></svg> },
+              { value: 'docx', label: 'Word Document (DOCX)', desc: 'Editable Microsoft Word format for further editing', icon: <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a4 4 0 004-4V8a4 4 0 10-8 0v6a4 4 0 004 4z" /><path d="M8 10h4v4H8v-4zm0 6h4v2H8v-2z" opacity=".5"/></svg> },
               { value: 'png', label: 'PNG Image', desc: 'High-resolution image for sharing', icon: <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-12z" /></svg> },
               { value: 'json', label: 'JSON Data', desc: 'Backup or transfer to another system', icon: <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" /><path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2 3 3 0 00-3 3H7a3 3 0 00-3-3 2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586 7.707 11.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg> },
             ].map(option => (
@@ -730,6 +981,53 @@ export function ResumeBuilderPage() {
           </div>
         </div>
       </Modal>
+
+      {/* AI Suggestions Drawer */}
+      {showAIDrawer && (
+        <div className="fixed inset-0 z-50 flex items-end">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowAIDrawer(false)} />
+          <div 
+            ref={drawerRef}
+            className="relative z-10 w-full max-w-2xl lg:max-w-3xl h-full lg:h-[90vh] bg-[var(--card)] border-l border-[var(--border)] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right"
+          >
+            {/* Drawer Header */}
+            <div className="flex items-center justify-between p-4 border-b border-[var(--border)] flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cosmic-500 to-nebula-500 flex items-center justify-center">
+                  <SparklesIcon className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">AI Suggestions</h3>
+                  <p className="text-sm text-[var(--muted-foreground)]">
+                    Target: {targetRole || 'Custom JD'} 
+                  </p>
+                </div>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowAIDrawer(false)}
+                aria-label="Close AI Suggestions"
+              >
+                <XMarkIcon className="w-5 h-5" />
+              </Button>
+            </div>
+            
+            {/* Drawer Content */}
+            <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+              <AISuggestionsPanel
+                resumeData={resumeData}
+                targetRole={targetRole || undefined}
+                jobDescription={jobDescription || undefined}
+                onApplySummary={handleApplySummary}
+                onApplyBullets={handleApplyBullets}
+                onApplySkills={handleApplySkills}
+                onApplyText={handleApplyText}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

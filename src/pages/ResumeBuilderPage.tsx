@@ -540,9 +540,9 @@ export function ResumeBuilderPage() {
       toast.error('Resume not found')
       return
     }
-  
+ 
     setIsExporting(true)
-  
+ 
     try {
       // Create a dedicated export element that works regardless of view mode
       const { exportContainer, contentDiv, root } = createExportElement()
@@ -553,29 +553,69 @@ export function ResumeBuilderPage() {
         
         const canvas = await captureResumeCanvas(contentDiv)
         const imgData = canvas.toDataURL('image/png', 1.0)
-  
+ 
         const pdf = new jsPDF({
           orientation: 'portrait',
           unit: 'mm',
           format: 'a4',
           compress: true,
         })
-  
-        const pageWidth = pdf.internal.pageSize.getWidth()
-        const pageHeight = pdf.internal.pageSize.getHeight()
-  
-        // Always fill exactly one A4 page.
-        pdf.addImage(
-          imgData,
-          'PNG',
-          0,
-          0,
-          pageWidth,
-          pageHeight,
-          undefined,
-          'FAST'
-        )
-  
+ 
+        // A4 dimensions in mm
+        const pageWidth = pdf.internal.pageSize.getWidth()   // 210mm
+        const pageHeight = pdf.internal.pageSize.getHeight() // 297mm
+        
+        // Use margins (15mm on each side = 30mm total horizontal, 20mm top/bottom = 40mm total vertical)
+        const marginX = 15
+        const marginY = 20
+        const usableWidth = pageWidth - 2 * marginX   // 180mm
+        const usableHeight = pageHeight - 2 * marginY // 257mm
+ 
+        // Canvas dimensions in pixels
+        const canvasWidth = canvas.width
+        const canvasHeight = canvas.height
+ 
+        // Calculate scale to fit canvas width to usable page width (preserving aspect ratio)
+        const scale = usableWidth / canvasWidth
+        const renderWidth = canvasWidth * scale
+        const renderHeight = canvasHeight * scale
+ 
+        if (renderHeight <= usableHeight) {
+          // Content fits on one page - center it horizontally
+          const x = marginX
+          const y = marginY
+          pdf.addImage(imgData, 'PNG', x, y, renderWidth, renderHeight)
+        } else {
+          // Content spans multiple pages - split the canvas
+          const pageCount = Math.ceil(renderHeight / usableHeight)
+          
+          for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+            if (pageIndex > 0) {
+              pdf.addPage()
+            }
+            
+            // Calculate the source rectangle for this page (in canvas pixels)
+            const sourceY = (pageIndex * usableHeight) / scale
+            const sourceHeight = Math.min(usableHeight / scale, canvasHeight - sourceY)
+            
+            // Create a temporary canvas for this page slice
+            const sliceCanvas = document.createElement('canvas')
+            sliceCanvas.width = canvasWidth
+            sliceCanvas.height = sourceHeight
+            const sliceCtx = sliceCanvas.getContext('2d')!
+            sliceCtx.drawImage(
+              canvas,
+              0, sourceY, canvasWidth, sourceHeight,
+              0, 0, canvasWidth, sourceHeight
+            )
+            
+            const sliceImgData = sliceCanvas.toDataURL('image/png', 1.0)
+            const sliceRenderHeight = sourceHeight * scale
+            
+            pdf.addImage(sliceImgData, 'PNG', marginX, marginY, renderWidth, sliceRenderHeight)
+          }
+        }
+ 
         pdf.save(getSafeFileName(current.title, 'pdf'))
         toast.success('PDF downloaded successfully')
       } finally {
@@ -589,8 +629,8 @@ export function ResumeBuilderPage() {
       setShowExportModal(false)
     }
   }
-  
-  const exportAsPNG = async () => {
+ 
+const exportAsPNG = async () => {
     const current = resume
     if (!current) {
       toast.error('Resume not found')

@@ -114,6 +114,229 @@ ${targetRole ? `Target Role: ${targetRole}` : ''}`
   return prompt
 }
 
+async function callGemini(
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+  type: AIRequest['type'],
+  model: string
+): Promise<any> {
+  // Combine system and user prompts for Gemini (which doesn't have a separate system role)
+  const combinedPrompt = `${systemPrompt}\n\n${userPrompt}`
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: combinedPrompt }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 2000,
+          topP: 0.95,
+          topK: 40,
+        },
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+        ],
+      }),
+    }
+  )
+
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Gemini API error:', JSON.stringify(error, null, 2))
+    const errorMessage = error.error?.message || 'Unknown error'
+    const errorCode = error.error?.code
+    
+    // Handle specific error cases
+    if (response.status === 429) {
+      throw new Error('Rate limit exceeded. Please try again later.')
+    }
+    
+    // Handle invalid API key
+    if (response.status === 400 && errorMessage.includes('API key')) {
+      throw new Error('Invalid API key configuration. Please check GEMINI_API_KEY.')
+    }
+    
+    // Handle invalid API key (401)
+    if (response.status === 401) {
+      throw new Error('Invalid or expired API key. Please check GEMINI_API_KEY.')
+    }
+    
+    // Handle model not found / deprecated model
+    if (response.status === 404 || (response.status === 400 && (errorMessage.includes('model') || errorMessage.includes('not found') || errorMessage.includes('deprecated') || errorMessage.includes('404')))) {
+      throw new Error('The AI model is not available. Please check the model configuration.')
+    }
+    
+    // Handle quota exceeded
+    if (errorCode === 8 || errorMessage.includes('quota') || errorMessage.includes('QUOTA')) {
+      throw new Error('API quota exceeded. Please check your Google Cloud quota.')
+    }
+    
+    // Handle permission denied
+    if (response.status === 403) {
+      throw new Error('Permission denied. Please check API key permissions.')
+    }
+    
+    throw new Error(`Gemini API error (${response.status}): ${errorMessage}`)
+  }
+
+  const completion = await response.json()
+  
+  // Check for candidates array
+  if (!completion.candidates || completion.candidates.length === 0) {
+    console.error('No candidates in response:', JSON.stringify(completion, null, 2))
+    throw new Error('No response candidates from Gemini API')
+  }
+  
+  const candidate = completion.candidates[0]
+  
+  // Check for finish reason
+  if (candidate.finishReason && candidate.finishReason !== 'STOP') {
+    console.warn('Gemini finish reason:', candidate.finishReason)
+    if (candidate.finishReason === 'SAFETY') {
+      throw new Error('Content blocked by safety filters')
+    }
+  }
+  
+  const content = candidate.content?.parts?.[0]?.text || ''
+  
+  if (!content) {
+    throw new Error('Empty response from Gemini API')
+  }
+
+  // Try to parse JSON response for structured outputs
+  if (['bullets', 'skills', 'improve', 'ats-feedback'].includes(type)) {
+    try {
+      // Clean up potential markdown code blocks
+      let cleanContent = content.trim()
+      if (cleanContent.startsWith('```json')) {
+        cleanContent = cleanContent.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+      } else if (cleanContent.startsWith('```')) {
+        cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '')
+      }
+      return JSON.parse(cleanContent)
+    } catch (parseError) {
+      console.error('Failed to parse JSON response:', parseError, 'Raw content:', content)
+      // If JSON parsing fails, return raw content in a structured format
+      return { raw: content }
+    }
+  } else {
+    return { text: content }
+  }
+}
+
+async function callOpenAI(
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+  type: AIRequest['type'],
+  model: string
+): Promise<any> {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userPrompt },
+      ],
+      temperature: 0.3,
+      max_tokens: 2000,
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('OpenAI API error:', error)
+    throw new Error(`AI provider error: ${error.error?.message || 'Unknown error'}`)
+  }
+
+  const completion = await response.json()
+  const content = completion.choices[0]?.message?.content || ''
+  
+  if (['bullets', 'skills', 'improve', 'ats-feedback'].includes(type)) {
+    try {
+      let cleanContent = content.trim()
+      if (cleanContent.startsWith('```json')) {
+        cleanContent = cleanContent.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+      } else if (cleanContent.startsWith('```')) {
+        cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '')
+      }
+      return JSON.parse(cleanContent)
+    } catch {
+      return { raw: content }
+    }
+  } else {
+    return { text: content }
+  }
+}
+
+async function callAnthropic(
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+  type: AIRequest['type'],
+  model: string
+): Promise<any> {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': apiKey,
+      'Content-Type': 'application/json',
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: model || 'claude-3-haiku-20240307',
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }],
+      temperature: 0.3,
+      max_tokens: 2000,
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Anthropic API error:', error)
+    throw new Error(`AI provider error: ${error.error?.message || 'Unknown error'}`)
+  }
+
+  const completion = await response.json()
+  const content = completion.content[0]?.text || ''
+  
+  if (['bullets', 'skills', 'improve', 'ats-feedback'].includes(type)) {
+    try {
+      let cleanContent = content.trim()
+      if (cleanContent.startsWith('```json')) {
+        cleanContent = cleanContent.replace(/^```json\s*/, '').replace(/\s*```$/, '')
+      } else if (cleanContent.startsWith('```')) {
+        cleanContent = cleanContent.replace(/^```\s*/, '').replace(/\s*```$/, '')
+      }
+      return JSON.parse(cleanContent)
+    } catch {
+      return { raw: content }
+    }
+  } else {
+    return { text: content }
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -136,16 +359,43 @@ serve(async (req) => {
     }
 
     // Get AI provider configuration from environment
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
     const anthropicApiKey = Deno.env.get('ANTHROPIC_API_KEY')
-    const aiProvider = Deno.env.get('AI_PROVIDER') || 'openai'
-    const aiModel = Deno.env.get('AI_MODEL') || 'gpt-4o-mini'
+    
+    // Determine provider: prefer Gemini if available, then OpenAI, then Anthropic
+    const configuredProvider = Deno.env.get('AI_PROVIDER')
+    let aiProvider: 'gemini' | 'openai' | 'anthropic' | null = null
+    let aiModel: string | null = null
 
-    if (!openaiApiKey && !anthropicApiKey) {
+    if (configuredProvider) {
+      aiProvider = configuredProvider as 'gemini' | 'openai' | 'anthropic'
+    } else if (geminiApiKey) {
+      aiProvider = 'gemini'
+    } else if (openaiApiKey) {
+      aiProvider = 'openai'
+    } else if (anthropicApiKey) {
+      aiProvider = 'anthropic'
+    }
+
+    // Default models for each provider
+    // Current stable models as per Google Gemini API documentation (as of 2025-10)
+    // Note: gemini-1.5-flash and gemini-1.5-flash-8b were deprecated/shut down on 2025-09-29
+    // gemini-2.0-flash and gemini-2.0-flash-lite were deprecated/shut down on 2026-06-01
+    // Current stable models: gemini-2.5-flash, gemini-2.5-flash-lite
+    if (aiProvider === 'gemini') {
+      aiModel = Deno.env.get('AI_MODEL') || 'gemini-2.5-flash'
+    } else if (aiProvider === 'openai') {
+      aiModel = Deno.env.get('AI_MODEL') || 'gpt-4o-mini'
+    } else if (aiProvider === 'anthropic') {
+      aiModel = Deno.env.get('AI_MODEL') || 'claude-3-haiku-20240307'
+    }
+
+    if (!aiProvider) {
       return new Response(
         JSON.stringify({ 
           error: 'AI service not configured',
-          message: 'Please configure OPENAI_API_KEY or ANTHROPIC_API_KEY in Supabase Edge Function secrets.',
+          message: 'Please configure GEMINI_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY in Supabase Edge Function secrets.',
           setupRequired: true
         }),
         { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -184,80 +434,19 @@ serve(async (req) => {
 
     let result: any
 
-    if (aiProvider === 'openai' && openaiApiKey) {
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: aiModel,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
-          temperature: 0.3,
-          max_tokens: 2000,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        console.error('OpenAI API error:', error)
-        throw new Error(`AI provider error: ${error.error?.message || 'Unknown error'}`)
-      }
-
-      const completion = await response.json()
-      const content = completion.choices[0]?.message?.content || ''
-      
-      // Try to parse JSON response for structured outputs
-      if (['bullets', 'skills', 'improve', 'ats-feedback'].includes(type)) {
-        try {
-          result = JSON.parse(content)
-        } catch {
-          result = { raw: content }
-        }
+    try {
+      if (aiProvider === 'gemini' && geminiApiKey) {
+        result = await callGemini(geminiApiKey, systemPrompt, userPrompt, type, aiModel!)
+      } else if (aiProvider === 'openai' && openaiApiKey) {
+        result = await callOpenAI(openaiApiKey, systemPrompt, userPrompt, type, aiModel!)
+      } else if (aiProvider === 'anthropic' && anthropicApiKey) {
+        result = await callAnthropic(anthropicApiKey, systemPrompt, userPrompt, type, aiModel!)
       } else {
-        result = { text: content }
+        throw new Error(`No valid AI provider configured for ${aiProvider}`)
       }
-    } else if (aiProvider === 'anthropic' && anthropicApiKey) {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'x-api-key': anthropicApiKey,
-          'Content-Type': 'application/json',
-          'anthropic-version': '2023-06-01',
-        },
-        body: JSON.stringify({
-          model: aiModel || 'claude-3-haiku-20240307',
-          system: systemPrompt,
-          messages: [{ role: 'user', content: userPrompt }],
-          temperature: 0.3,
-          max_tokens: 2000,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        console.error('Anthropic API error:', error)
-        throw new Error(`AI provider error: ${error.error?.message || 'Unknown error'}`)
-      }
-
-      const completion = await response.json()
-      const content = completion.content[0]?.text || ''
-      
-      if (['bullets', 'skills', 'improve', 'ats-feedback'].includes(type)) {
-        try {
-          result = JSON.parse(content)
-        } catch {
-          result = { raw: content }
-        }
-      } else {
-        result = { text: content }
-      }
-    } else {
-      throw new Error('No valid AI provider configured')
+    } catch (providerError) {
+      // If the configured provider fails, don't fall back silently - return the error
+      throw providerError
     }
 
     return new Response(
@@ -267,12 +456,20 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('AI Suggestions error:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    
+    // Check if it's a setup/configuration error
+    const isSetupError = errorMessage.includes('not configured') || 
+                         errorMessage.includes('Invalid API key') ||
+                         errorMessage.includes('Rate limit')
+    
     return new Response(
       JSON.stringify({ 
         error: 'Failed to generate AI suggestions',
-        message: error instanceof Error ? error.message : 'Unknown error'
+        message: errorMessage,
+        setupRequired: isSetupError
       }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: isSetupError ? 503 : 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })

@@ -445,6 +445,7 @@ export async function exportResumeToDocx(
             bold: true,
             color: headingColor.hex,
             size: 28,
+            font: 'Inter',
           },
           paragraph: {
             spacing: { before: 240, after: 120 },

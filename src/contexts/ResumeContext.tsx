@@ -486,8 +486,45 @@ export function ResumeProvider({ children }: { children: React.ReactNode }) {
     const resume = resumes.find(r => r.id === id)
     if (!resume) throw new Error('Resume not found')
 
-    return createResume(`${resume.title} (Copy)`, resume.template_id)
-  }, [resumes, createResume])
+    // Deep clone all resume data to ensure the duplicate is independent
+    const duplicatedData = JSON.parse(JSON.stringify(resume.data))
+
+    const newResume: Resume = {
+      id: generateId(),
+      user_id: user?.id || 'guest',
+      title: `${resume.title} (Copy)`,
+      template_id: resume.template_id,
+      data: duplicatedData,
+      is_public: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
+    if (user && user.provider !== 'guest') {
+      const { data, error } = await supabase
+        .from('resumes')
+        .insert({
+          user_id: user.id,
+          title: newResume.title,
+          template_id: newResume.template_id,
+          data: newResume.data,
+          is_public: false,
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+      const savedResume = data as Resume
+      setResumes(prev => [savedResume, ...prev])
+      setCurrentResumeState(savedResume)
+      return savedResume
+    } else {
+      // Guest user - store locally
+      setResumes(prev => [newResume, ...prev])
+      setCurrentResumeState(newResume)
+      return newResume
+    }
+  }, [resumes, user])
 
   const exportResume = useCallback(async (id: string, format: 'pdf' | 'json') => {
     const resume = resumes.find(r => r.id === id) || currentResume

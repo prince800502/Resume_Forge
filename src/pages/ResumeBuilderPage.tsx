@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { createRoot } from 'react-dom/client'
 import { useParams, useNavigate } from 'react-router-dom'
 import { gsap } from 'gsap'
 import { 
@@ -53,22 +54,11 @@ export function ResumeBuilderPage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [targetRole, setTargetRole] = useState('')
   const [jobDescription, setJobDescription] = useState('')
-  const [showAIDrawer, setShowAIDrawer] = useState(false)
+  const [showAIModal, setShowAIModal] = useState(false)
   
   const previewRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
-  const drawerRef = useRef<HTMLDivElement>(null)
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout>>()
-  
-  // Refs for latest values without triggering re-renders
-  const resumesRef = useRef(resumes)
-  const activeTemplateIdRef = useRef(activeTemplateId)
-  const updateResumeRef = useRef(updateResume)
-  
-  // Keep refs in sync
-  useEffect(() => { resumesRef.current = resumes }, [resumes])
-  useEffect(() => { activeTemplateIdRef.current = activeTemplateId }, [activeTemplateId])
-  useEffect(() => { updateResumeRef.current = updateResume }, [updateResume])
   
   // Resolve resume from URL parameter - this is the authoritative source
   const resume = useMemo(() => 
@@ -76,14 +66,28 @@ export function ResumeBuilderPage() {
     [resumes, id]
   )
   
-  // If resume not found, navigate to dashboard
+  // Refs for latest values without triggering re-renders
+  const resumesRef = useRef(resumes)
+  const activeTemplateIdRef = useRef(activeTemplateId)
+  const updateResumeRef = useRef(updateResume)
+  // Ref to always access the latest resume (from route param) for handleDataChange
+  const resumeRef = useRef<typeof resume | null>(null)
+  
+  // Keep refs in sync
+  useEffect(() => { resumesRef.current = resumes }, [resumes])
+  useEffect(() => { activeTemplateIdRef.current = activeTemplateId }, [activeTemplateId])
+  useEffect(() => { updateResumeRef.current = updateResume }, [updateResume])
+  useEffect(() => { resumeRef.current = resume }, [resume])
+  
+  // Handle missing resume - redirect to dashboard when not loading
+  useEffect(() => {
+    if (!resume && !loading) {
+      navigate('/dashboard', { replace: true })
+    }
+  }, [resume, loading, navigate])
+  
+  // If resume not found, show loading or not found state
   if (!resume) {
-    useEffect(() => {
-      if (!loading) {
-        navigate('/dashboard', { replace: true })
-      }
-    }, [loading, resume, navigate])
-    
     if (loading) {
       return (
         <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
@@ -91,7 +95,7 @@ export function ResumeBuilderPage() {
         </div>
       )
     }
-    
+  
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
         <Card variant="glass" padding="lg" className="max-w-md text-center">
@@ -145,39 +149,40 @@ export function ResumeBuilderPage() {
       setActiveTemplateId(resume.template_id)
     }
   }, [resume?.id])
-
+  
   // Track the last saved data revision to prevent stale overwrites
   const saveRevisionRef = useRef(0)
   
   // Handle data changes with immediate local updates and debounced persistence
   const handleDataChange = useCallback((data: Partial<any>) => {
-    // Use the resume from the route parameter - this is the authoritative source
-    if (!resume) return
-
+    // Use the resume ref to always get the latest resume from the route parameter
+    const currentResume = resumeRef.current
+    if (!currentResume) return
+  
     const updatedData = {
-      ...resume.data,
+      ...currentResume.data,
       ...data,
     }
-
+  
     // Only include template_id in updates if it actually changed
     const templateId = activeTemplateIdRef.current
     const updates: any = { data: updatedData }
-    if (resume.template_id !== templateId) {
+    if (currentResume.template_id !== templateId) {
       updates.template_id = templateId
     }
-
+  
     // Update the UI immediately without making a database request.
-    void updateResumeRef.current(resume.id, updates, { persist: false })
-
+    void updateResumeRef.current(currentResume.id, updates, { persist: false })
+  
     setAutoSaveStatus('pending')
-
+  
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current)
     }
-
+  
     // Increment revision to track this save cycle
     const thisRevision = ++saveRevisionRef.current
-
+  
     // Save only after the user stops typing for 800ms.
     autoSaveTimeoutRef.current = setTimeout(async () => {
       // Check if a newer revision has started - if so, skip this save
@@ -187,8 +192,8 @@ export function ResumeBuilderPage() {
       
       try {
         setAutoSaveStatus('saving')
-
-        await updateResumeRef.current(resume.id, updates, { persist: true })
+  
+        await updateResumeRef.current(currentResume.id, updates, { persist: true })
         
         // Only update status if this is still the latest revision
         if (thisRevision === saveRevisionRef.current) {
@@ -204,31 +209,32 @@ export function ResumeBuilderPage() {
       }
     }, 800)
   }, [])
-
+  
   // Handle template change
   const handleTemplateChange = useCallback(async (newTemplateId: string) => {
     setActiveTemplateId(newTemplateId)
-    if (!resume) return
+    const currentResume = resumeRef.current
+    if (!currentResume) return
     try {
-      await updateResumeRef.current(resume.id, { template_id: newTemplateId })
+      await updateResumeRef.current(currentResume.id, { template_id: newTemplateId })
       toast.success('Template changed')
     } catch (error) {
       toast.error('Failed to change template')
     }
   }, [])
-
+  
   // AI Suggestion handlers
   const handleApplySummary = useCallback((summary: string) => {
     handleDataChange({ summary })
   }, [handleDataChange])
-
+  
   const handleApplyBullets = useCallback((
     sectionType: 'experience' | 'projects',
     itemId: string,
     bullets: string[]
   ) => {
     if (!resume) return
-
+  
     if (sectionType === 'experience') {
       const updatedExperience = resume.data.experience.map((exp: any) =>
         exp.id === itemId ? { ...exp, description: bullets } : exp
@@ -241,23 +247,23 @@ export function ResumeBuilderPage() {
       handleDataChange({ projects: updatedProjects })
     }
   }, [handleDataChange, resume])
-
+  
   const handleApplySkills = useCallback((skills: string[]) => {
     if (!resume) return
-
+  
     const newSkills = skills.map(name => ({
       id: `skill_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       name,
       category: 'technical' as const,
       proficiency: 'intermediate' as const,
     }))
-
+  
     handleDataChange({ skills: [...resume.data.skills, ...newSkills] })
   }, [handleDataChange, resume])
-
+  
   const handleApplyText = useCallback((field: string, value: string) => {
     if (!resume) return
-
+  
     if (field === 'summary') {
       handleDataChange({ summary: value })
     } else if (field.startsWith('experience-')) {
@@ -274,43 +280,107 @@ export function ResumeBuilderPage() {
       handleDataChange({ projects: updatedProjects })
     }
   }, [handleDataChange, resume])
-
+  
   // Export functions
+  // Create a temporary export preview element that's independent of the view mode
+  const createExportElement = () => {
+    // Use the TemplateRenderer directly to create an exportable element
+    const exportDiv = document.createElement('div')
+    exportDiv.className = 'resume-preview'
+    exportDiv.style.position = 'absolute'
+    exportDiv.style.left = '-9999px'
+    exportDiv.style.top = '0'
+    exportDiv.style.width = '210mm'
+    exportDiv.style.visibility = 'hidden'
+    exportDiv.style.pointerEvents = 'none'
+    
+    // Apply the same CSS variables that TemplateRenderer uses
+    exportDiv.style.setProperty('--foreground', templateColors.text, 'important')
+    exportDiv.style.setProperty('--muted-foreground', templateColors.secondary, 'important')
+    exportDiv.style.setProperty('--background', templateColors.background, 'important')
+    exportDiv.style.setProperty('--card', templateColors.background, 'important')
+    exportDiv.style.setProperty('--primary', templateColors.primary, 'important')
+    exportDiv.style.setProperty('--accent', templateColors.accent, 'important')
+    exportDiv.style.setProperty('--heading', templateColors.heading, 'important')
+    exportDiv.style.backgroundColor = templateColors.background
+    exportDiv.style.color = templateColors.text
+    exportDiv.style.minWidth = '210mm'
+    exportDiv.style.maxWidth = '210mm'
+    exportDiv.style.width = '210mm'
+    exportDiv.style.transformOrigin = 'top center'
+    exportDiv.style.boxSizing = 'border-box'
+    
+    const innerDiv = document.createElement('div')
+    innerDiv.style.backgroundColor = templateColors.background
+    innerDiv.style.color = templateColors.text
+    innerDiv.style.minHeight = '297mm'
+    innerDiv.style.padding = '2rem 3rem'
+    innerDiv.style.width = '100%'
+    innerDiv.style.boxSizing = 'border-box'
+    innerDiv.style.borderRadius = '0.75rem'
+    innerDiv.style.boxShadow = 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)'
+    
+    exportDiv.appendChild(innerDiv)
+    
+    // Render the TemplateRenderer component directly into innerDiv
+    // This ensures the export works in all view modes (including editor-only)
+    const root = createRoot(innerDiv)
+    root.render(
+      <TemplateRenderer
+        data={resumeData}
+        templateId={activeTemplateId}
+        colors={templateColors}
+        isFullPreview={true}
+      />
+    )
+    
+    document.body.appendChild(exportDiv)
+    return { exportDiv, innerDiv, root }
+  }
+  
+  const cleanupExportElement = (exportDiv: HTMLElement, root?: ReturnType<typeof createRoot>) => {
+    if (root) {
+      root.unmount()
+    }
+    if (exportDiv && exportDiv.parentNode) {
+      exportDiv.parentNode.removeChild(exportDiv)
+    }
+  }
+  
   const getExportElement = () => {
-    // Capture only the actual A4 resume, not the editor, sticky wrapper,
-    // toolbar, template badge, or zoom controls.
+    // Fallback to existing preview element for backward compatibility
     return previewRef.current?.querySelector('.resume-preview') as HTMLElement | null
   }
-
+  
   const getSafeFileName = (title: string, extension: string) => {
     const safeTitle = title
       .trim()
       .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
       .replace(/\s+/g, '_')
       .slice(0, 100) || 'Resume'
-
+  
     return `${safeTitle}.${extension}`
   }
-
+  
   const waitForExportLayout = async () => {
     if (document.fonts?.ready) {
       await document.fonts.ready
     }
-
+  
     await new Promise<void>(resolve => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => resolve())
       })
     })
   }
-
+  
   const captureResumeCanvas = async (exportElement: HTMLElement) => {
     const rect = exportElement.getBoundingClientRect()
-
+  
     if (rect.width <= 0 || rect.height <= 0) {
       throw new Error('Resume preview has no visible dimensions')
     }
-
+  
     const captureOptions = {
       scale: Math.min(2.5, Math.max(2, window.devicePixelRatio || 1)),
       useCORS: true,
@@ -326,9 +396,9 @@ export function ResumeBuilderPage() {
       scrollY: 0,
       onclone: (clonedDocument: Document) => {
         const clonedResume = clonedDocument.querySelector('.resume-preview') as HTMLElement | null
-
+  
         if (!clonedResume) return
-
+  
         // Keep the resume independent from the application's dark/light theme.
         clonedResume.style.setProperty('--foreground', templateColors.text, 'important')
         clonedResume.style.setProperty('--muted-foreground', templateColors.secondary, 'important')
@@ -337,7 +407,7 @@ export function ResumeBuilderPage() {
         clonedResume.style.setProperty('--primary', templateColors.primary, 'important')
         clonedResume.style.setProperty('--accent', templateColors.accent, 'important')
         clonedResume.style.setProperty('--heading', templateColors.heading, 'important')
-
+  
         clonedResume.style.backgroundColor = templateColors.background
         clonedResume.style.color = templateColors.text
         clonedResume.style.transform = 'none'
@@ -346,7 +416,7 @@ export function ResumeBuilderPage() {
         clonedResume.style.position = 'relative'
         clonedResume.style.left = '0'
         clonedResume.style.top = '0'
-
+  
         const inner = clonedResume.firstElementChild as HTMLElement | null
         if (inner) {
           inner.style.backgroundColor = templateColors.background
@@ -357,9 +427,9 @@ export function ResumeBuilderPage() {
         }
       },
     }
-
+  
     let canvas = await html2canvas(exportElement, captureOptions)
-
+  
     // html2canvas can occasionally produce an empty canvas when a page
     // contains theme CSS variables. Retry with foreignObject rendering.
     if (canvas.width === 0 || canvas.height === 0 || isCanvasBlank(canvas)) {
@@ -368,22 +438,22 @@ export function ResumeBuilderPage() {
         foreignObjectRendering: true,
       })
     }
-
+  
     if (canvas.width === 0 || canvas.height === 0 || isCanvasBlank(canvas)) {
       throw new Error('The resume could not be rendered for export')
     }
-
+  
     return canvas
   }
-
+  
   const isCanvasBlank = (canvas: HTMLCanvasElement) => {
     const sampleCanvas = document.createElement('canvas')
     sampleCanvas.width = Math.min(canvas.width, 100)
     sampleCanvas.height = Math.min(canvas.height, 100)
-
+  
     const ctx = sampleCanvas.getContext('2d')
     if (!ctx) return false
-
+  
     ctx.drawImage(
       canvas,
       0,
@@ -395,63 +465,68 @@ export function ResumeBuilderPage() {
       sampleCanvas.width,
       sampleCanvas.height
     )
-
+  
     const pixels = ctx.getImageData(
       0,
       0,
       sampleCanvas.width,
       sampleCanvas.height
     ).data
-
+  
     // A completely transparent canvas is definitely blank.
     for (let i = 3; i < pixels.length; i += 4) {
       if (pixels[i] !== 0) return false
     }
-
+  
     return true
   }
-
+  
   const exportAsPDF = async () => {
     const current = resume
-    const exportElement = getExportElement()
-
-    if (!exportElement || !current) {
-      toast.error('Resume preview is not ready yet')
+    if (!current) {
+      toast.error('Resume not found')
       return
     }
-
+  
     setIsExporting(true)
-
+  
     try {
       await waitForExportLayout()
-
-      const canvas = await captureResumeCanvas(exportElement)
-      const imgData = canvas.toDataURL('image/png', 1.0)
-
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-        compress: true,
-      })
-
-      const pageWidth = pdf.internal.pageSize.getWidth()
-      const pageHeight = pdf.internal.pageSize.getHeight()
-
-      // Always fill exactly one A4 page.
-      pdf.addImage(
-        imgData,
-        'PNG',
-        0,
-        0,
-        pageWidth,
-        pageHeight,
-        undefined,
-        'FAST'
-      )
-
-      pdf.save(getSafeFileName(current.title, 'pdf'))
-      toast.success('PDF downloaded successfully')
+  
+      // Create a dedicated export element that works regardless of view mode
+      const { exportDiv, innerDiv, root } = createExportElement()
+      
+      try {
+        const canvas = await captureResumeCanvas(exportDiv)
+        const imgData = canvas.toDataURL('image/png', 1.0)
+  
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+          compress: true,
+        })
+  
+        const pageWidth = pdf.internal.pageSize.getWidth()
+        const pageHeight = pdf.internal.pageSize.getHeight()
+  
+        // Always fill exactly one A4 page.
+        pdf.addImage(
+          imgData,
+          'PNG',
+          0,
+          0,
+          pageWidth,
+          pageHeight,
+          undefined,
+          'FAST'
+        )
+  
+        pdf.save(getSafeFileName(current.title, 'pdf'))
+        toast.success('PDF downloaded successfully')
+      } finally {
+        cleanupExportElement(exportDiv, root)
+      }
     } catch (error) {
       console.error('PDF export error:', error)
       toast.error('Failed to export PDF. Please try again.')
@@ -460,43 +535,53 @@ export function ResumeBuilderPage() {
       setShowExportModal(false)
     }
   }
-
+  
   const exportAsPNG = async () => {
     const current = resume
-    const exportElement = getExportElement()
-
-    if (!exportElement || !current) {
-      toast.error('Resume preview is not ready yet')
+    if (!current) {
+      toast.error('Resume not found')
       return
     }
-
+  
     setIsExporting(true)
-
+  
     try {
       await waitForExportLayout()
-
-      const canvas = await captureResumeCanvas(exportElement)
-
-      canvas.toBlob((blob) => {
+  
+      // Create a dedicated export element that works regardless of view mode
+      const { exportDiv, innerDiv, root } = createExportElement()
+      
+      try {
+        const canvas = await captureResumeCanvas(exportDiv)
+  
+        // Wrap toBlob in a Promise to ensure proper async handling
+        const blob = await new Promise<Blob | null>((resolve) => {
+          canvas.toBlob((blob) => {
+            resolve(blob)
+          }, 'image/png', 1.0)
+        })
+  
         if (!blob) {
           toast.error('Failed to create PNG')
           return
         }
-
+  
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
-
+  
         link.href = url
         link.download = getSafeFileName(current.title, 'png')
         link.style.display = 'none'
-
+  
         document.body.appendChild(link)
         link.click()
         link.remove()
-
+  
         setTimeout(() => URL.revokeObjectURL(url), 1000)
         toast.success('PNG downloaded successfully')
-      }, 'image/png', 1.0)
+      } finally {
+        cleanupExportElement(exportDiv, root)
+      }
     } catch (error) {
       console.error('PNG export error:', error)
       toast.error('Failed to export PNG. Please try again.')
@@ -505,47 +590,47 @@ export function ResumeBuilderPage() {
       setShowExportModal(false)
     }
   }
-
+  
   const exportAsJSON = () => {
     const current = resume
     if (!current) return
-
+  
     const blob = new Blob([JSON.stringify(current, null, 2)], {
       type: 'application/json',
     })
-
+  
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-
+  
     a.href = url
     a.download = getSafeFileName(current.title, 'json')
     a.style.display = 'none'
-
+  
     document.body.appendChild(a)
     a.click()
     a.remove()
-
+  
     setTimeout(() => URL.revokeObjectURL(url), 1000)
-
+  
     toast.success('JSON downloaded successfully')
     setShowExportModal(false)
   }
-
+  
   const exportAsDOCX = async () => {
     const current = resume
     if (!current) {
       toast.error('Resume not found')
       return
     }
-
+  
     setIsExporting(true)
-
+  
     try {
       const blob = await exportResumeToDocx(current.data, {
         templateId: activeTemplateIdRef.current,
         colors: templateColors,
       })
-
+  
       triggerDownload(blob, getDocxSafeFileName(current.title, 'docx'))
       toast.success('Word document downloaded successfully')
     } catch (error) {
@@ -556,7 +641,7 @@ export function ResumeBuilderPage() {
       setShowExportModal(false)
     }
   }
-
+  
   const handleExport = () => {
     switch (exportFormat) {
       case 'pdf':
@@ -573,7 +658,7 @@ export function ResumeBuilderPage() {
         break
     }
   }
-
+  
   // Cleanup
   useEffect(() => {
     return () => {
@@ -582,7 +667,7 @@ export function ResumeBuilderPage() {
       }
     }
   }, [])
-
+  
   // Animate entrance
   useEffect(() => {
     const tl = gsap.timeline()
@@ -598,7 +683,7 @@ export function ResumeBuilderPage() {
       '-=0.3'
     )
   }, [])
-
+  
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
@@ -606,7 +691,7 @@ export function ResumeBuilderPage() {
       </div>
     )
   }
-
+  
   if (!resume) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
@@ -623,18 +708,18 @@ export function ResumeBuilderPage() {
       </div>
     )
   }
-
+  
   const viewModeLayouts = {
     split: { editor: 'lg:w-1/2', preview: 'lg:w-1/2 hidden lg:block' },
     editor: { editor: 'w-full', preview: 'hidden' },
     preview: { editor: 'hidden', preview: 'w-full' },
   }
-
+  
   const layout = viewModeLayouts[viewMode]
-
+  
   // Full preview mode detection
   const isFullPreview = viewMode === 'preview'
-
+  
   return (
     <div className="min-h-screen relative flex flex-col" style={{ background: 'var(--background)' }}>
       {/* Animated Background */}
@@ -642,7 +727,7 @@ export function ResumeBuilderPage() {
         <MorphingBlobs />
         <FloatingParticles count={40} />
       </div>
-
+  
       {/* Top Toolbar */}
       <header className="sticky top-0 z-40 bg-[var(--background)]/90 backdrop-blur-xl border-b border-[var(--border)]">
         <div className="max-w-full mx-auto px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -667,8 +752,8 @@ export function ResumeBuilderPage() {
               <h1 className="font-bold text-base truncate" style={{ color: 'var(--foreground)' }}>{resume.title}</h1>
             </div>
           </div>
-
-          {/* Center: View Mode, Template, AI Inputs */}
+  
+          {/* Center: View Mode, Template, AI Toggle */}
           <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto flex-wrap gap-2">
             {/* View Mode Toggle */}
             <div className="flex bg-[var(--muted)] rounded-lg p-1 w-full sm:w-auto" role="group" aria-label="View mode">
@@ -693,7 +778,7 @@ export function ResumeBuilderPage() {
                 </button>
               ))}
             </div>
-
+  
             {/* Template Selector */}
             <div className="relative w-full sm:w-auto">
               <Button 
@@ -707,25 +792,7 @@ export function ResumeBuilderPage() {
                 <ChevronDownIcon className="w-4 h-4 flex-shrink-0" />
               </Button>
             </div>
-
-            {/* Target Role Input for AI */}
-            <div className="hidden xs:flex items-center gap-2 w-full sm:w-auto">
-              <Input
-                type="text"
-                placeholder="Target role (e.g., Senior Software Engineer)"
-                value={targetRole}
-                onChange={(e) => setTargetRole(e.target.value)}
-                className="flex-1 min-w-[140px] max-w-[200px]"
-              />
-              <Input
-                type="text"
-                placeholder="Or paste job description..."
-                value={jobDescription}
-                onChange={(e) => setJobDescription(e.target.value)}
-                className="flex-1 min-w-[160px] max-w-[240px]"
-              />
-            </div>
-
+  
             {/* ATS Check Button */}
             <Button 
               variant="primary" 
@@ -745,28 +812,28 @@ export function ResumeBuilderPage() {
             >
               <DocumentMagnifyingGlassIcon className="w-5 h-5" />
             </Button>
-
-            {/* AI Suggestions Panel Toggle */}
+  
+            {/* AI Suggestions Modal Toggle */}
             <Button 
               variant="secondary" 
               size="sm"
-              onClick={() => setShowAIDrawer(!showAIDrawer)}
+              onClick={() => setShowAIModal(true)}
               leftIcon={<SparklesIcon className="w-4 h-4" />}
-              className={clsx('hidden xs:flex gap-2', showAIDrawer && 'bg-cosmic-500/10 border-cosmic-500/50')}
+              className={clsx('hidden xs:flex gap-2', showAIModal && 'bg-cosmic-500/10 border-cosmic-500/50')}
             >
               AI Suggestions
             </Button>
             <Button 
               variant="secondary" 
               size="sm"
-              onClick={() => setShowAIDrawer(!showAIDrawer)}
-              className={clsx('xs:hidden p-2', showAIDrawer && 'bg-cosmic-500/10 border-cosmic-500/50')}
-              aria-label="Toggle AI Suggestions"
+              onClick={() => setShowAIModal(true)}
+              className={clsx('xs:hidden p-2', showAIModal && 'bg-cosmic-500/10 border-cosmic-500/50')}
+              aria-label="Open AI Suggestions"
             >
               <SparklesIcon className="w-5 h-5" />
             </Button>
           </div>
-
+  
           {/* Right: Actions */}
           <div className="flex items-center gap-2 flex-wrap">
             {/* Auto-save indicator */}
@@ -787,7 +854,7 @@ export function ResumeBuilderPage() {
                     : 'Pending'}
               </span>
             </div>
-
+  
             {/* Export */}
             <Button 
               variant="secondary" 
@@ -810,47 +877,7 @@ export function ResumeBuilderPage() {
           </div>
         </div>
       </header>
-
-      {/* Mobile AI Inputs Bar - improved responsive layout */}
-      <div className="xs:hidden sm:hidden border-t border-[var(--border)] bg-[var(--background)]/90 backdrop-blur-xl px-4 py-3">
-        <div className="space-y-2 max-w-md mx-auto">
-          <Input
-            type="text"
-            placeholder="Target role (e.g., Senior Software Engineer)"
-            value={targetRole}
-            onChange={(e) => setTargetRole(e.target.value)}
-            className="w-full"
-          />
-          <Input
-            type="text"
-            placeholder="Or paste job description..."
-            value={jobDescription}
-            onChange={(e) => setJobDescription(e.target.value)}
-            className="w-full"
-          />
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button 
-              variant="secondary" 
-              size="sm"
-              onClick={() => setShowAIDrawer(!showAIDrawer)}
-              leftIcon={<SparklesIcon className="w-4 h-4" />}
-              className="flex-1"
-            >
-              AI Suggestions
-            </Button>
-            <Button 
-              variant="primary" 
-              size="sm"
-              onClick={() => navigate(`/ats-checker/${resume.id}`)}
-              leftIcon={<DocumentMagnifyingGlassIcon className="w-4 h-4" />}
-              className="flex-1"
-            >
-              ATS Check
-            </Button>
-          </div>
-        </div>
-      </div>
-
+  
       {/* Main Content */}
       <main className="flex-1 w-full min-w-0 p-4 lg:p-6 overflow-y-auto">
         <div className="max-w-full mx-auto">
@@ -873,7 +900,7 @@ export function ResumeBuilderPage() {
                 </PageTransition>
               </div>
             </aside>
-
+  
             {/* Preview Panel */}
             <aside 
               ref={previewRef}
@@ -901,7 +928,7 @@ export function ResumeBuilderPage() {
           </div>
         </div>
       </main>
-
+  
       {/* Template Selection Modal */}
       <Modal
         isOpen={showTemplateModal}
@@ -926,7 +953,7 @@ export function ResumeBuilderPage() {
           </div>
         </div>
       </Modal>
-
+  
       {/* Export Modal */}
       <Modal
         isOpen={showExportModal}
@@ -965,7 +992,7 @@ export function ResumeBuilderPage() {
               </button>
             ))}
           </div>
-
+  
           <div className="flex justify-end gap-3 pt-4 border-t border-[var(--border)]">
             <Button variant="secondary" onClick={() => setShowExportModal(false)}>
               Cancel
@@ -981,53 +1008,29 @@ export function ResumeBuilderPage() {
           </div>
         </div>
       </Modal>
-
-      {/* AI Suggestions Drawer */}
-      {showAIDrawer && (
-        <div className="fixed inset-0 z-50 flex items-end">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowAIDrawer(false)} />
-          <div 
-            ref={drawerRef}
-            className="relative z-10 w-full max-w-2xl lg:max-w-3xl h-full lg:h-[90vh] bg-[var(--card)] border-l border-[var(--border)] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right"
-          >
-            {/* Drawer Header */}
-            <div className="flex items-center justify-between p-4 border-b border-[var(--border)] flex-shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cosmic-500 to-nebula-500 flex items-center justify-center">
-                  <SparklesIcon className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold">AI Suggestions</h3>
-                  <p className="text-sm text-[var(--muted-foreground)]">
-                    Target: {targetRole || 'Custom JD'} 
-                  </p>
-                </div>
-              </div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setShowAIDrawer(false)}
-                aria-label="Close AI Suggestions"
-              >
-                <XMarkIcon className="w-5 h-5" />
-              </Button>
-            </div>
-            
-            {/* Drawer Content */}
-            <div className="flex-1 overflow-y-auto p-4 lg:p-6">
-              <AISuggestionsPanel
-                resumeData={resumeData}
-                targetRole={targetRole || undefined}
-                jobDescription={jobDescription || undefined}
-                onApplySummary={handleApplySummary}
-                onApplyBullets={handleApplyBullets}
-                onApplySkills={handleApplySkills}
-                onApplyText={handleApplyText}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+  
+      {/* AI Suggestions Modal - Centered Premium Glassmorphism */}
+      <Modal
+        isOpen={showAIModal}
+        onClose={() => setShowAIModal(false)}
+        title="AI Suggestions"
+        description="Enhance your resume with AI-powered insights tailored to your target role"
+        size="2xl"
+        className="max-w-[1100px] w-[calc(100vw-48px)] max-h-[calc(100dvh-48px)]"
+      >
+        <AISuggestionsPanel
+          resumeData={resumeData}
+          targetRole={targetRole}
+          jobDescription={jobDescription}
+          onApplySummary={handleApplySummary}
+          onApplyBullets={handleApplyBullets}
+          onApplySkills={handleApplySkills}
+          onApplyText={handleApplyText}
+          onTargetRoleChange={setTargetRole}
+          onJobDescriptionChange={setJobDescription}
+          onClose={() => setShowAIModal(false)}
+        />
+      </Modal>
     </div>
   )
 }

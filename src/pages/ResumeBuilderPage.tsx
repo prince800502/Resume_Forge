@@ -287,12 +287,13 @@ export function ResumeBuilderPage() {
     // Use the TemplateRenderer directly to create an exportable element
     const exportDiv = document.createElement('div')
     exportDiv.className = 'resume-preview'
-    exportDiv.style.position = 'absolute'
+    exportDiv.style.position = 'fixed'
     exportDiv.style.left = '-9999px'
     exportDiv.style.top = '0'
     exportDiv.style.width = '210mm'
     exportDiv.style.visibility = 'hidden'
     exportDiv.style.pointerEvents = 'none'
+    exportDiv.style.zIndex = '-1'
     
     // Apply the same CSS variables that TemplateRenderer uses
     exportDiv.style.setProperty('--foreground', templateColors.text, 'important')
@@ -338,6 +339,37 @@ export function ResumeBuilderPage() {
     return { exportDiv, innerDiv, root }
   }
   
+  // Wait for React to finish rendering and fonts to load
+  const waitForExportReady = async (innerDiv: HTMLElement) => {
+    // Wait for fonts to load
+    if (document.fonts?.ready) {
+      await document.fonts.ready
+    }
+    
+    // Wait for React to finish rendering (wait for microtasks and a frame)
+    await new Promise<void>(resolve => {
+      setTimeout(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve())
+        })
+      }, 0)
+    })
+    
+    // Additional wait for any images to load
+    const images = innerDiv.querySelectorAll('img')
+    if (images.length > 0) {
+      const promises: Promise<void>[] = []
+      for (const img of images) {
+        if (img.complete) continue
+        promises.push(new Promise<void>((resolve) => {
+          img.onload = () => resolve()
+          img.onerror = () => resolve()
+        }))
+      }
+      await Promise.all(promises)
+    }
+  }
+  
   const cleanupExportElement = (exportDiv: HTMLElement, root?: ReturnType<typeof createRoot>) => {
     if (root) {
       root.unmount()
@@ -360,18 +392,6 @@ export function ResumeBuilderPage() {
       .slice(0, 100) || 'Resume'
   
     return `${safeTitle}.${extension}`
-  }
-  
-  const waitForExportLayout = async () => {
-    if (document.fonts?.ready) {
-      await document.fonts.ready
-    }
-  
-    await new Promise<void>(resolve => {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => resolve())
-      })
-    })
   }
   
   const captureResumeCanvas = async (exportElement: HTMLElement) => {
@@ -491,12 +511,13 @@ export function ResumeBuilderPage() {
     setIsExporting(true)
   
     try {
-      await waitForExportLayout()
-  
       // Create a dedicated export element that works regardless of view mode
       const { exportDiv, innerDiv, root } = createExportElement()
       
       try {
+        // Wait for React rendering and fonts to load
+        await waitForExportReady(innerDiv)
+        
         const canvas = await captureResumeCanvas(exportDiv)
         const imgData = canvas.toDataURL('image/png', 1.0)
   
@@ -546,12 +567,13 @@ export function ResumeBuilderPage() {
     setIsExporting(true)
   
     try {
-      await waitForExportLayout()
-  
       // Create a dedicated export element that works regardless of view mode
       const { exportDiv, innerDiv, root } = createExportElement()
       
       try {
+        // Wait for React rendering and fonts to load
+        await waitForExportReady(innerDiv)
+  
         const canvas = await captureResumeCanvas(exportDiv)
   
         // Wrap toBlob in a Promise to ensure proper async handling

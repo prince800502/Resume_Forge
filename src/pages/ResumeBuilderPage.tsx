@@ -284,48 +284,43 @@ export function ResumeBuilderPage() {
   // Export functions
   // Create a temporary export preview element that's independent of the view mode
   const createExportElement = () => {
-    // Use the TemplateRenderer directly to create an exportable element
-    const exportDiv = document.createElement('div')
-    exportDiv.className = 'resume-preview'
-    exportDiv.style.position = 'fixed'
-    exportDiv.style.left = '-9999px'
-    exportDiv.style.top = '0'
-    exportDiv.style.width = '210mm'
-    exportDiv.style.visibility = 'hidden'
-    exportDiv.style.pointerEvents = 'none'
-    exportDiv.style.zIndex = '-1'
+    // Create a container for the export - use absolute positioning off-screen but VISIBLE
+    // html2canvas cannot capture elements with visibility:hidden or negative z-index
+    const exportContainer = document.createElement('div')
+    exportContainer.className = 'resume-export-container'
+    exportContainer.style.position = 'absolute'
+    exportContainer.style.left = '-9999px'
+    exportContainer.style.top = '0'
+    exportContainer.style.width = '210mm'
+    exportContainer.style.pointerEvents = 'none'
+    // DO NOT use visibility:hidden or z-index:-1 - these prevent html2canvas from capturing
+    exportContainer.style.zIndex = '0'
+    exportContainer.style.overflow = 'visible'
     
-    // Apply the same CSS variables that TemplateRenderer uses
-    exportDiv.style.setProperty('--foreground', templateColors.text, 'important')
-    exportDiv.style.setProperty('--muted-foreground', templateColors.secondary, 'important')
-    exportDiv.style.setProperty('--background', templateColors.background, 'important')
-    exportDiv.style.setProperty('--card', templateColors.background, 'important')
-    exportDiv.style.setProperty('--primary', templateColors.primary, 'important')
-    exportDiv.style.setProperty('--accent', templateColors.accent, 'important')
-    exportDiv.style.setProperty('--heading', templateColors.heading, 'important')
-    exportDiv.style.backgroundColor = templateColors.background
-    exportDiv.style.color = templateColors.text
-    exportDiv.style.minWidth = '210mm'
-    exportDiv.style.maxWidth = '210mm'
-    exportDiv.style.width = '210mm'
-    exportDiv.style.transformOrigin = 'top center'
-    exportDiv.style.boxSizing = 'border-box'
+    // Apply the CSS variables that TemplateRenderer and templates depend on
+    exportContainer.style.setProperty('--foreground', templateColors.text, 'important')
+    exportContainer.style.setProperty('--muted-foreground', templateColors.secondary, 'important')
+    exportContainer.style.setProperty('--background', templateColors.background, 'important')
+    exportContainer.style.setProperty('--card', templateColors.background, 'important')
+    exportContainer.style.setProperty('--primary', templateColors.primary, 'important')
+    exportContainer.style.setProperty('--accent', templateColors.accent, 'important')
+    exportContainer.style.setProperty('--heading', templateColors.heading, 'important')
+    exportContainer.style.backgroundColor = templateColors.background
+    exportContainer.style.color = templateColors.text
+    exportContainer.style.boxSizing = 'border-box'
     
-    const innerDiv = document.createElement('div')
-    innerDiv.style.backgroundColor = templateColors.background
-    innerDiv.style.color = templateColors.text
-    innerDiv.style.minHeight = '297mm'
-    innerDiv.style.padding = '2rem 3rem'
-    innerDiv.style.width = '100%'
-    innerDiv.style.boxSizing = 'border-box'
-    innerDiv.style.borderRadius = '0.75rem'
-    innerDiv.style.boxShadow = 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)'
+    // Create the inner content div where TemplateRenderer will render
+    // This div will receive the .resume-preview class from TemplateRenderer
+    const contentDiv = document.createElement('div')
+    contentDiv.id = 'resume-export-content'
+    contentDiv.style.width = '100%'
+    contentDiv.style.boxSizing = 'border-box'
     
-    exportDiv.appendChild(innerDiv)
+    exportContainer.appendChild(contentDiv)
     
-    // Render the TemplateRenderer component directly into innerDiv
-    // This ensures the export works in all view modes (including editor-only)
-    const root = createRoot(innerDiv)
+    // Render the TemplateRenderer component directly into contentDiv
+    // TemplateRenderer will create its own .resume-preview element inside contentDiv
+    const root = createRoot(contentDiv)
     root.render(
       <TemplateRenderer
         data={resumeData}
@@ -335,47 +330,61 @@ export function ResumeBuilderPage() {
       />
     )
     
-    document.body.appendChild(exportDiv)
-    return { exportDiv, innerDiv, root }
+    document.body.appendChild(exportContainer)
+    return { exportContainer, contentDiv, root }
   }
   
-  // Wait for React to finish rendering and fonts to load
-  const waitForExportReady = async (innerDiv: HTMLElement) => {
+  // Wait for React to finish rendering, fonts to load, and layout to stabilize
+  const waitForExportReady = async (contentDiv: HTMLElement) => {
     // Wait for fonts to load
     if (document.fonts?.ready) {
       await document.fonts.ready
     }
     
-    // Wait for React to finish rendering (wait for microtasks and a frame)
+    // Wait for React to finish rendering - use a more robust approach
+    // React 18's createRoot.render is synchronous for the initial render, but
+    // layout effects and ref callbacks fire after paint. We need to wait for
+    // the browser to complete layout.
     await new Promise<void>(resolve => {
-      setTimeout(() => {
+      // Use requestAnimationFrame to wait for the next paint cycle
+      requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          requestAnimationFrame(() => resolve())
+          // Additional microtask wait for any deferred work
+          queueMicrotask(() => resolve())
         })
-      }, 0)
+      })
     })
     
+    // Verify the contentDiv has actual rendered content
+    const resumePreview = contentDiv.querySelector('.resume-preview')
+    if (!resumePreview) {
+      console.warn('[Export] .resume-preview element not found in contentDiv')
+    }
+    
     // Additional wait for any images to load
-    const images = innerDiv.querySelectorAll('img')
+    const images = contentDiv.querySelectorAll('img')
     if (images.length > 0) {
       const promises: Promise<void>[] = []
       for (const img of images) {
         if (img.complete) continue
         promises.push(new Promise<void>((resolve) => {
           img.onload = () => resolve()
-          img.onerror = () => resolve()
+          img.onerror = () => resolve() // Don't fail on image errors
         }))
       }
       await Promise.all(promises)
     }
+    
+    // Final layout stabilization - wait one more frame after images load
+    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
   }
   
-  const cleanupExportElement = (exportDiv: HTMLElement, root?: ReturnType<typeof createRoot>) => {
+  const cleanupExportElement = (exportContainer: HTMLElement, root?: ReturnType<typeof createRoot>) => {
     if (root) {
       root.unmount()
     }
-    if (exportDiv && exportDiv.parentNode) {
-      exportDiv.parentNode.removeChild(exportDiv)
+    if (exportContainer && exportContainer.parentNode) {
+      exportContainer.parentNode.removeChild(exportContainer)
     }
   }
   
@@ -394,18 +403,25 @@ export function ResumeBuilderPage() {
     return `${safeTitle}.${extension}`
   }
   
-  const captureResumeCanvas = async (exportElement: HTMLElement) => {
-    const rect = exportElement.getBoundingClientRect()
-  
+  const captureResumeCanvas = async (contentDiv: HTMLElement) => {
+    // Find the actual .resume-preview element rendered by TemplateRenderer inside contentDiv
+    const resumePreview = contentDiv.querySelector('.resume-preview') as HTMLElement | null
+    
+    if (!resumePreview) {
+      throw new Error('Resume preview element not found in export content')
+    }
+
+    const rect = resumePreview.getBoundingClientRect()
+
     if (rect.width <= 0 || rect.height <= 0) {
       throw new Error('Resume preview has no visible dimensions')
     }
-  
+
     const captureOptions = {
       scale: Math.min(2.5, Math.max(2, window.devicePixelRatio || 1)),
       useCORS: true,
       allowTaint: false,
-      logging: false,
+      logging: true,
       backgroundColor: templateColors.background,
       imageTimeout: 15000,
       width: Math.ceil(rect.width),
@@ -415,10 +431,14 @@ export function ResumeBuilderPage() {
       scrollX: 0,
       scrollY: 0,
       onclone: (clonedDocument: Document) => {
-        const clonedResume = clonedDocument.querySelector('.resume-preview') as HTMLElement | null
-  
+        // In the cloned document, find the .resume-preview element
+        // Use the ID we set on the contentDiv to find the right one
+        const clonedContent = clonedDocument.getElementById('resume-export-content')
+        if (!clonedContent) return
+        
+        const clonedResume = clonedContent.querySelector('.resume-preview') as HTMLElement | null
         if (!clonedResume) return
-  
+
         // Keep the resume independent from the application's dark/light theme.
         clonedResume.style.setProperty('--foreground', templateColors.text, 'important')
         clonedResume.style.setProperty('--muted-foreground', templateColors.secondary, 'important')
@@ -427,7 +447,7 @@ export function ResumeBuilderPage() {
         clonedResume.style.setProperty('--primary', templateColors.primary, 'important')
         clonedResume.style.setProperty('--accent', templateColors.accent, 'important')
         clonedResume.style.setProperty('--heading', templateColors.heading, 'important')
-  
+
         clonedResume.style.backgroundColor = templateColors.background
         clonedResume.style.color = templateColors.text
         clonedResume.style.transform = 'none'
@@ -436,7 +456,7 @@ export function ResumeBuilderPage() {
         clonedResume.style.position = 'relative'
         clonedResume.style.left = '0'
         clonedResume.style.top = '0'
-  
+
         const inner = clonedResume.firstElementChild as HTMLElement | null
         if (inner) {
           inner.style.backgroundColor = templateColors.background
@@ -447,22 +467,35 @@ export function ResumeBuilderPage() {
         }
       },
     }
-  
-    let canvas = await html2canvas(exportElement, captureOptions)
-  
+
+    let canvas = await html2canvas(resumePreview, captureOptions)
+
+    // Diagnostic: log canvas info
+    console.log('[Export] Canvas captured:', {
+      width: canvas.width,
+      height: canvas.height,
+      isBlank: isCanvasBlank(canvas)
+    })
+
     // html2canvas can occasionally produce an empty canvas when a page
     // contains theme CSS variables. Retry with foreignObject rendering.
     if (canvas.width === 0 || canvas.height === 0 || isCanvasBlank(canvas)) {
-      canvas = await html2canvas(exportElement, {
+      console.log('[Export] First capture blank, retrying with foreignObjectRendering...')
+      canvas = await html2canvas(resumePreview, {
         ...captureOptions,
         foreignObjectRendering: true,
       })
+      console.log('[Export] Retry canvas:', {
+        width: canvas.width,
+        height: canvas.height,
+        isBlank: isCanvasBlank(canvas)
+      })
     }
-  
+
     if (canvas.width === 0 || canvas.height === 0 || isCanvasBlank(canvas)) {
-      throw new Error('The resume could not be rendered for export')
+      throw new Error('The resume could not be rendered for export - canvas is blank')
     }
-  
+
     return canvas
   }
   
@@ -512,13 +545,13 @@ export function ResumeBuilderPage() {
   
     try {
       // Create a dedicated export element that works regardless of view mode
-      const { exportDiv, innerDiv, root } = createExportElement()
+      const { exportContainer, contentDiv, root } = createExportElement()
       
       try {
         // Wait for React rendering and fonts to load
-        await waitForExportReady(innerDiv)
+        await waitForExportReady(contentDiv)
         
-        const canvas = await captureResumeCanvas(exportDiv)
+        const canvas = await captureResumeCanvas(contentDiv)
         const imgData = canvas.toDataURL('image/png', 1.0)
   
         const pdf = new jsPDF({
@@ -546,7 +579,7 @@ export function ResumeBuilderPage() {
         pdf.save(getSafeFileName(current.title, 'pdf'))
         toast.success('PDF downloaded successfully')
       } finally {
-        cleanupExportElement(exportDiv, root)
+        cleanupExportElement(exportContainer, root)
       }
     } catch (error) {
       console.error('PDF export error:', error)
@@ -568,13 +601,13 @@ export function ResumeBuilderPage() {
   
     try {
       // Create a dedicated export element that works regardless of view mode
-      const { exportDiv, innerDiv, root } = createExportElement()
+      const { exportContainer, contentDiv, root } = createExportElement()
       
       try {
         // Wait for React rendering and fonts to load
-        await waitForExportReady(innerDiv)
+        await waitForExportReady(contentDiv)
   
-        const canvas = await captureResumeCanvas(exportDiv)
+        const canvas = await captureResumeCanvas(contentDiv)
   
         // Wrap toBlob in a Promise to ensure proper async handling
         const blob = await new Promise<Blob | null>((resolve) => {
@@ -602,7 +635,7 @@ export function ResumeBuilderPage() {
         setTimeout(() => URL.revokeObjectURL(url), 1000)
         toast.success('PNG downloaded successfully')
       } finally {
-        cleanupExportElement(exportDiv, root)
+        cleanupExportElement(exportContainer, root)
       }
     } catch (error) {
       console.error('PNG export error:', error)

@@ -7,6 +7,8 @@ import {
   cleanupExportContainer,
   getSafeFileName,
   ExportColors,
+  CONTENT_WIDTH_PX,
+  CAPTURE_SCALE,
 } from './exportUtils.tsx';
 
 export interface PngExportOptions {

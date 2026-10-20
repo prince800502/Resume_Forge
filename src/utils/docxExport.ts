@@ -370,6 +370,14 @@ export async function exportResumeToDocx(
     }, target);
   };
 
+  // Page break helper - only add when needed
+  const addPageBreakIfNeeded = (target: Paragraph[] = children) => {
+    target.push(new Paragraph({
+      children: [new TextRun({ text: '', size: 2, break: 1 })], // Page break
+      spacing: { before: 0, after: 0 },
+    }));
+  };
+
   // Date formatting
   const formatDate = (dateStr: string, format: 'short' | 'long' = 'short') => {
     if (!dateStr) return '';
@@ -541,6 +549,13 @@ export async function exportResumeToDocx(
     }
   };
 
+  const addSectionWithKeepTogether = (isSidebar = false) => {
+    // Add a small spacer before new section to prevent crowding
+    if (!isSidebar) {
+      addSpacer(SPACING.lg);
+    }
+  };
+
   const buildExperience = (isSidebar = false) => {
     if (experience.length > 0) {
       addHeading('Professional Experience', HeadingLevel.HEADING_2, isSidebar);
@@ -579,7 +594,7 @@ export async function exportResumeToDocx(
         addParagraph({
           children: posRuns,
           spacing: { before: expIndex === 0 ? SPACING.xl : SPACING.xxl, after: SPACING.xs },
-          // Don't keepNext on individual entries - allow natural page breaks
+          keepNext: true, // Keep position/company with meta
         }, target);
 
         // Location and Dates
@@ -598,9 +613,9 @@ export async function exportResumeToDocx(
           }, isSidebar);
         }
 
-        // Description bullets
+        // Description bullets - keep together with position
         if (exp.description.length > 0) {
-          exp.description.forEach((desc) => {
+          exp.description.forEach((desc, descIndex) => {
             addBullet(desc, 0, isSidebar);
           });
         }
@@ -612,6 +627,11 @@ export async function exportResumeToDocx(
             color: getMutedColor(), 
             spacing: { before: SPACING.md, after: SPACING.lg } 
           }, isSidebar);
+        }
+        
+        // Add spacing between entries
+        if (expIndex < experience.length - 1 && !isSidebar) {
+          addSpacer(SPACING.md);
         }
       });
     }
@@ -656,7 +676,7 @@ export async function exportResumeToDocx(
         addParagraph({
           children: eduRuns,
           spacing: { before: eduIndex === 0 ? SPACING.xl : SPACING.xxl, after: SPACING.xs },
-          // Don't keepNext on individual entries - allow natural page breaks
+          keepNext: true,
         }, target);
 
         // Meta info
@@ -674,6 +694,10 @@ export async function exportResumeToDocx(
             color: getMutedColor(), 
             spacing: { before: 0, after: SPACING.lg } 
           }, isSidebar);
+        }
+        
+        if (eduIndex < education.length - 1 && !isSidebar) {
+          addSpacer(SPACING.md);
         }
       });
     }
@@ -736,7 +760,7 @@ export async function exportResumeToDocx(
             }),
           ],
           spacing: { before: projIndex === 0 ? SPACING.xl : SPACING.xxl, after: SPACING.xs },
-          // Don't keepNext on individual entries - allow natural page breaks
+          keepNext: true,
         }, target);
 
         // Description
@@ -775,6 +799,10 @@ export async function exportResumeToDocx(
             spacing: { before: SPACING.md, after: SPACING.lg } 
           }, isSidebar);
         }
+        
+        if (projIndex < projects.length - 1 && !isSidebar) {
+          addSpacer(SPACING.md);
+        }
       });
     }
   };
@@ -804,7 +832,7 @@ export async function exportResumeToDocx(
             }),
           ],
           spacing: { before: certIndex === 0 ? SPACING.xl : SPACING.xl, after: SPACING.xs },
-          // Don't keepNext on individual entries - allow natural page breaks
+          keepNext: true,
         }, target);
 
         // Meta
@@ -827,6 +855,10 @@ export async function exportResumeToDocx(
             color: getAccentColor(), 
             spacing: { before: 0, after: SPACING.lg } 
           }, isSidebar);
+        }
+        
+        if (certIndex < certifications.length - 1 && !isSidebar) {
+          addSpacer(SPACING.md);
         }
       });
     }

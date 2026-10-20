@@ -52,12 +52,12 @@ export function TemplateRenderer({ data, templateId, colors, isFullPreview = fal
     '--primary': colors.primary,
     '--accent': colors.accent,
     '--heading': colors.heading,
-    // Print-optimized spacing variables
-    '--space-section': isExport ? '24px' : '32px',      // Between major sections
-    '--space-heading': isExport ? '12px' : '16px',      // After section heading
-    '--space-entry': isExport ? '16px' : '24px',        // Between entries
-    '--space-item': isExport ? '8px' : '12px',          // Between items within entry
-    '--space-tight': isExport ? '4px' : '6px',          // Tight spacing
+    // Print-optimized spacing variables - more compact for export to fit content better
+    '--space-section': isExport ? '16px' : '32px',      // Between major sections
+    '--space-heading': isExport ? '8px' : '16px',       // After section heading
+    '--space-entry': isExport ? '12px' : '24px',        // Between entries
+    '--space-item': isExport ? '6px' : '12px',          // Between items within entry
+    '--space-tight': isExport ? '3px' : '6px',          // Tight spacing
     '--radius-card': isExport ? '0' : '8px',            // Card radius (0 for print)
     '--border-width': isExport ? '1px' : '1px',
   } as React.CSSProperties

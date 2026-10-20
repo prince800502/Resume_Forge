@@ -16,6 +16,7 @@ import {
   ExportColors,
   CAPTURE_SCALE,
   CONTENT_WIDTH_PX,
+  CONTENT_HEIGHT_PX,
 } from './exportUtils.tsx';
 
 export interface PdfExportOptions {
@@ -60,14 +61,12 @@ export async function exportResumeToPdf(
       compress: true,
     });
 
-    // Calculate scaling: content width in CSS px -> content width in mm
-    // Canvas was captured at CAPTURE_SCALE * CSS pixels
-    const elementWidthPx = contentWidthPx; // CSS pixels
-    const scaleX = CONTENT_WIDTH_MM / elementWidthPx;
-    const scaleY = scaleX; // Preserve aspect ratio
-
+    // Calculate precise scaling: source canvas bitmap pixels -> mm
+    // canvas.width = contentWidthPx * CAPTURE_SCALE (bitmap pixels)
+    // Target: CONTENT_WIDTH_MM (printable area width in mm)
+    const bitmapToMmScale = CONTENT_WIDTH_MM / canvas.width;
     const renderWidth = CONTENT_WIDTH_MM;
-    const renderHeight = contentHeightPx * scaleY;
+    const renderHeight = canvas.height * bitmapToMmScale;
 
     const pageWidth = pdf.internal.pageSize.getWidth();   // 210mm
     const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
@@ -75,23 +74,18 @@ export async function exportResumeToPdf(
     const marginY = MARGIN_TOP_MM;
     const usableHeight = CONTENT_HEIGHT_MM; // 257mm
 
-    // Check if content fits on one page
+    const imgData = canvas.toDataURL('image/png', 1.0);
+
+    // Single-page optimization: if content fits, center it properly
     if (renderHeight <= usableHeight) {
-      // Single page - place with margins
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      pdf.addImage(imgData, 'PNG', marginX, marginY, renderWidth, renderHeight);
+      const x = marginX;
+      const y = marginY + (usableHeight - renderHeight) / 2; // Center vertically
+      pdf.addImage(imgData, 'PNG', x, y, renderWidth, renderHeight);
     } else {
-      // Multi-page: slice the canvas horizontally
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      
-      // Calculate how many CSS pixels fit per page
-      const pxPerPage = usableHeight / scaleY;
-      const totalPages = Math.ceil(contentHeightPx / pxPerPage);
-      
-      // Scale from canvas bitmap pixels to mm
-      // canvas.width = contentWidthPx * CAPTURE_SCALE (bitmap pixels)
-      // CONTENT_WIDTH_MM is the target width in mm
-      const bitmapToMmScale = CONTENT_WIDTH_MM / canvas.width; // mm per bitmap pixel
+      // Multi-page: slice the canvas horizontally with proper bitmap-to-mm conversion
+      // Calculate how many bitmap pixels fit per page
+      const pxPerPageBitmap = Math.round(usableHeight / bitmapToMmScale);
+      const totalPages = Math.ceil(canvas.height / pxPerPageBitmap);
       
       let currentY = marginY;
       
@@ -101,9 +95,8 @@ export async function exportResumeToPdf(
           currentY = marginY;
         }
 
-        // Source rectangle in canvas pixels (canvas is at CAPTURE_SCALE)
-        const pxPerPageBitmap = Math.round(pxPerPage * CAPTURE_SCALE);
-        const sourceY = Math.round(pageIndex * pxPerPageBitmap);
+        // Source rectangle in canvas pixels (bitmap pixels)
+        const sourceY = pageIndex * pxPerPageBitmap;
         const sourceHeight = Math.min(pxPerPageBitmap, canvas.height - sourceY);
 
         if (sourceHeight <= 0) continue;
@@ -121,11 +114,16 @@ export async function exportResumeToPdf(
 
         const sliceImgData = sliceCanvas.toDataURL('image/png', 1.0);
         
-        // Convert sourceHeight (bitmap pixels) to mm using bitmap-to-mm scale
-        // canvas.width = contentWidthPx * CAPTURE_SCALE
-        // bitmapToMmScale = CONTENT_WIDTH_MM / canvas.width
-        const bitmapToMmScale = CONTENT_WIDTH_MM / canvas.width;
-        const sliceRenderHeight = sourceHeight * bitmapToMmScale;
+        // Convert sourceHeight (bitmap pixels) to mm using same scale
+        const sliceRenderHeight = sourceHeight * (CONTENT_WIDTH_MM / canvas.width);
+
+        // Avoid placing tiny slices at page end (orphaned content)
+        const remainingSpace = pageHeight - marginY - currentY;
+        if (pageIndex < totalPages - 1 && sliceRenderHeight < 20 && remainingSpace < 40) {
+          // Move this slice to next page if it's very small and would leave little space
+          pdf.addPage();
+          currentY = marginY;
+        }
 
         pdf.addImage(sliceImgData, 'PNG', marginX, currentY, renderWidth, sliceRenderHeight);
         currentY += sliceRenderHeight;

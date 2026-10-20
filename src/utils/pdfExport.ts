@@ -88,6 +88,11 @@ export async function exportResumeToPdf(
       const pxPerPage = usableHeight / scaleY;
       const totalPages = Math.ceil(contentHeightPx / pxPerPage);
       
+      // Scale from canvas bitmap pixels to mm
+      // canvas.width = contentWidthPx * CAPTURE_SCALE (bitmap pixels)
+      // CONTENT_WIDTH_MM is the target width in mm
+      const bitmapToMmScale = CONTENT_WIDTH_MM / canvas.width; // mm per bitmap pixel
+      
       let currentY = marginY;
       
       for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
@@ -97,11 +102,9 @@ export async function exportResumeToPdf(
         }
 
         // Source rectangle in canvas pixels (canvas is at CAPTURE_SCALE)
-        const sourceY = Math.round(pageIndex * pxPerPage * CAPTURE_SCALE);
-        const sourceHeight = Math.min(
-          Math.round(pxPerPage * CAPTURE_SCALE),
-          canvas.height - sourceY
-        );
+        const pxPerPageBitmap = Math.round(pxPerPage * CAPTURE_SCALE);
+        const sourceY = Math.round(pageIndex * pxPerPageBitmap);
+        const sourceHeight = Math.min(pxPerPageBitmap, canvas.height - sourceY);
 
         if (sourceHeight <= 0) continue;
 
@@ -117,7 +120,12 @@ export async function exportResumeToPdf(
         );
 
         const sliceImgData = sliceCanvas.toDataURL('image/png', 1.0);
-        const sliceRenderHeight = sourceHeight * scaleY;
+        
+        // Convert sourceHeight (bitmap pixels) to mm using bitmap-to-mm scale
+        // canvas.width = contentWidthPx * CAPTURE_SCALE
+        // bitmapToMmScale = CONTENT_WIDTH_MM / canvas.width
+        const bitmapToMmScale = CONTENT_WIDTH_MM / canvas.width;
+        const sliceRenderHeight = sourceHeight * bitmapToMmScale;
 
         pdf.addImage(sliceImgData, 'PNG', marginX, currentY, renderWidth, sliceRenderHeight);
         currentY += sliceRenderHeight;

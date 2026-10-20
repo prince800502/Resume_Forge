@@ -12,9 +12,10 @@ interface ExecutiveLeadershipProps {
     text: string
     heading: string
   }
+  isExport?: boolean
 }
 
-export function ExecutiveLeadership({ data, colors }: ExecutiveLeadershipProps) {
+export function ExecutiveLeadership({ data, colors, isExport = false }: ExecutiveLeadershipProps) {
   const { personal, summary, experience, education, skills, projects, certifications, languages, custom_sections } = data
 
   const style = {
@@ -42,11 +43,26 @@ export function ExecutiveLeadership({ data, colors }: ExecutiveLeadershipProps) 
     return `${startDate} – ${endDate}`
   }
 
+  const sectionStyle = {
+    marginBottom: 'var(--space-section)',
+  }
+
+  const headingStyle2 = {
+    ...headingStyle,
+    fontSize: '1rem',
+    marginBottom: 'var(--space-heading)',
+    paddingBottom: '8px',
+  }
+
+  const entryStyle = {
+    marginBottom: 'var(--space-entry)',
+  }
+
   return (
     <div className="executive-leadership-template" style={style} data-template="executive-leadership">
       {/* Header - Formal and centered */}
-      <header className="mb-10 pb-8 border-b-2 text-center" style={{ borderColor: colors.primary }}>
-        <div className="inline-flex items-center gap-3 mb-4" style={{ backgroundColor: colors.primary }}>
+      <header className="mb-[var(--space-section)] pb-[var(--space-heading)] border-b-2 text-center" style={{ borderColor: colors.primary }}>
+        <div className="inline-flex items-center gap-3 mb-4" style={{ backgroundColor: colors.primary, borderRadius: 'var(--radius-card)' }}>
           <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.accent }} />
         </div>
         <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-wide" style={headingStyle}>
@@ -72,11 +88,11 @@ export function ExecutiveLeadership({ data, colors }: ExecutiveLeadershipProps) 
 
       {/* Executive Summary */}
       {summary && (
-        <section className="mb-10">
-          <h2 className="text-lg font-bold mb-4 pb-2 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="summary">
+          <h2 style={headingStyle2}>
             Executive Summary
           </h2>
-          <div className="p-6 border-l-4" style={{ borderColor: colors.primary, backgroundColor: `${colors.primary}05` }}>
+          <div className="p-4 border-l-4" style={{ borderColor: colors.primary, backgroundColor: `${colors.primary}05`, borderRadius: 'var(--radius-card)' }}>
             <p className="text-[var(--foreground)] leading-relaxed whitespace-pre-wrap text-lg">{summary}</p>
           </div>
         </section>
@@ -84,8 +100,8 @@ export function ExecutiveLeadership({ data, colors }: ExecutiveLeadershipProps) 
 
       {/* Core Competencies */}
       {skills.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-lg font-bold mb-4 pb-2 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="skills">
+          <h2 style={headingStyle2}>
             Core Competencies
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -94,7 +110,7 @@ export function ExecutiveLeadership({ data, colors }: ExecutiveLeadershipProps) 
               if (categorySkills.length === 0) return null
               
               return (
-                <div key={category} className="p-4 border rounded-lg" style={{ borderColor: `${colors.primary}30` }}>
+                <div key={category} className="p-4 border" style={{ borderColor: `${colors.primary}30`, borderRadius: 'var(--radius-card)' }}>
                   <h3 className="text-xs font-bold mb-3 tracking-widest capitalize" style={{ ...headingStyle, textTransform: 'uppercase' }}>
                     {category.replace('_', ' ')}
                   </h3>
@@ -114,14 +130,14 @@ export function ExecutiveLeadership({ data, colors }: ExecutiveLeadershipProps) 
 
       {/* Executive Experience */}
       {experience.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-lg font-bold mb-6 pb-2 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="experience">
+          <h2 style={headingStyle2}>
             Leadership Experience
           </h2>
-          <div className="space-y-8">
+          <div className="space-y-[var(--space-entry)]">
             {experience.map((exp) => (
-              <div key={exp.id} className="border-l-4 pl-6" style={{ borderColor: colors.primary }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-4 mb-3">
+              <div key={exp.id} className="border-l-4 pl-6" style={{ ...entryStyle, borderColor: colors.primary }}>
+                <div className="flex flex-col md:flex-row md:justify-between gap-4 mb-[var(--space-item)]">
                   <div>
                     <h3 className="text-xl font-bold mb-1" style={headingStyle}>{exp.position}</h3>
                     <p className="text-lg font-medium" style={{ color: colors.accent }}>{exp.company}</p>
@@ -134,14 +150,14 @@ export function ExecutiveLeadership({ data, colors }: ExecutiveLeadershipProps) 
                   </div>
                 </div>
                 {exp.description.length > 0 && (
-                  <ul className="list-disc list-inside space-y-2 text-[var(--foreground)] leading-relaxed ml-4">
+                  <ul className="list-disc list-inside space-y-[var(--space-item)] text-[var(--foreground)] leading-relaxed ml-4">
                     {exp.description.map((desc, i) => (
                       <li key={i} className="relative pl-2">{desc}</li>
                     ))}
                   </ul>
                 )}
                 {exp.technologies.length > 0 && (
-                  <p className="mt-4 text-sm text-[var(--muted-foreground)]">
+                  <p className="mt-[var(--space-item)] text-sm text-[var(--muted-foreground)]">
                     <span className="font-medium tracking-wide" style={{ textTransform: 'uppercase' }}>Key Areas: </span>
                     {exp.technologies.join(', ')}
                   </p>
@@ -154,13 +170,13 @@ export function ExecutiveLeadership({ data, colors }: ExecutiveLeadershipProps) 
 
       {/* Education */}
       {education.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-lg font-bold mb-6 pb-2 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="education">
+          <h2 style={headingStyle2}>
             Education
           </h2>
-          <div className="space-y-5">
+          <div className="space-y-[var(--space-entry)]">
             {education.map((edu) => (
-              <div key={edu.id} className="p-5 border rounded-lg" style={{ borderColor: `${colors.primary}20` }}>
+              <div key={edu.id} className="p-4 border" style={{ ...entryStyle, borderColor: `${colors.primary}20`, borderRadius: 'var(--radius-card)' }}>
                 <div className="flex flex-col md:flex-row md:justify-between gap-4">
                   <div>
                     <p className="font-bold text-lg mb-1" style={headingStyle}>
@@ -193,13 +209,13 @@ export function ExecutiveLeadership({ data, colors }: ExecutiveLeadershipProps) 
 
       {/* Board Roles / Certifications */}
       {certifications.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-lg font-bold mb-6 pb-2 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="certifications">
+          <h2 style={headingStyle2}>
             Board Roles & Certifications
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-[var(--space-item)]">
             {certifications.map((cert) => (
-              <div key={cert.id} className="p-4 border-l-4" style={{ borderColor: colors.accent, backgroundColor: `${colors.accent}05` }}>
+              <div key={cert.id} className="p-4 border-l-4" style={{ ...entryStyle, borderColor: colors.accent, backgroundColor: `${colors.accent}05`, borderRadius: 'var(--radius-card)' }}>
                 <div className="flex flex-col md:flex-row md:justify-between gap-4">
                   <div>
                     <p className="font-bold" style={headingStyle}>{cert.name}</p>
@@ -224,8 +240,8 @@ export function ExecutiveLeadership({ data, colors }: ExecutiveLeadershipProps) 
 
       {/* Languages */}
       {languages.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-lg font-bold mb-4 pb-2 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="languages">
+          <h2 style={headingStyle2}>
             Languages
           </h2>
           <p className="text-[var(--foreground)]">
@@ -240,11 +256,11 @@ export function ExecutiveLeadership({ data, colors }: ExecutiveLeadershipProps) 
 
       {/* Custom Sections */}
       {custom_sections.map((section) => (
-        <section key={section.id} className="mb-10">
-          <h2 className="text-lg font-bold mb-6 pb-2 border-b-2" style={headingStyle}>
+        <section key={section.id} style={sectionStyle} data-section={`custom-${section.id}`}>
+          <h2 style={headingStyle2}>
             {section.title.toUpperCase()}
           </h2>
-          <div className="space-y-5">
+          <div className="space-y-[var(--space-entry)]">
             {section.items.map((item) => (
               <div key={item.id} className="pl-6 border-l-2" style={{ borderColor: colors.secondary }}>
                 <h3 className="font-bold mb-1" style={headingStyle}>{item.title}</h3>

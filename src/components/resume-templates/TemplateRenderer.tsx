@@ -19,41 +19,28 @@ export interface TemplateRendererProps {
     heading: string
   }
   isFullPreview?: boolean
+  isExport?: boolean
 }
 
-export function TemplateRenderer({ data, templateId, colors, isFullPreview = false }: TemplateRendererProps) {
+export function TemplateRenderer({ data, templateId, colors, isFullPreview = false, isExport = false }: TemplateRendererProps) {
   const renderTemplate = () => {
     switch (templateId) {
       case 'modern-1':
       case 'modern-2':
-        return <ModernProfessional data={data} colors={colors} />
+        return <ModernProfessional data={data} colors={colors} isExport={isExport} />
       case 'classic-1':
-        return <ClassicExecutive data={data} colors={colors} />
+        return <ClassicExecutive data={data} colors={colors} isExport={isExport} />
       case 'creative-1':
-        return <CreativePortfolio data={data} colors={colors} />
+        return <CreativePortfolio data={data} colors={colors} isExport={isExport} />
       case 'minimal-1':
-        return <MinimalEssentials data={data} colors={colors} />
+        return <MinimalEssentials data={data} colors={colors} isExport={isExport} />
       case 'executive-1':
-        return <ExecutiveLeadership data={data} colors={colors} />
+        return <ExecutiveLeadership data={data} colors={colors} isExport={isExport} />
       default:
-        return <ModernProfessional data={data} colors={colors} />
+        return <ModernProfessional data={data} colors={colors} isExport={isExport} />
     }
   }
 
-  /*
-   * IMPORTANT:
-   * Resume templates are rendered inside the application's dark theme.
-   * Some templates use CSS variables such as:
-   *   text-[var(--foreground)]
-   *   text-[var(--muted-foreground)]
-   *
-   * Those variables normally belong to the app's dark/light theme, not
-   * the resume itself. In dark mode they can therefore make text disappear
-   * on the white/cream resume page.
-   *
-   * Override the variables locally at the resume root so every template
-   * always uses its own configured resume colors.
-   */
   const resumeVariables = {
     '--foreground': colors.text,
     '--muted-foreground': colors.secondary,
@@ -62,17 +49,22 @@ export function TemplateRenderer({ data, templateId, colors, isFullPreview = fal
     '--primary': colors.primary,
     '--accent': colors.accent,
     '--heading': colors.heading,
+    // Print-optimized spacing variables
+    '--space-section': isExport ? '24px' : '32px',      // Between major sections
+    '--space-heading': isExport ? '12px' : '16px',      // After section heading
+    '--space-entry': isExport ? '16px' : '24px',        // Between entries
+    '--space-item': isExport ? '8px' : '12px',          // Between items within entry
+    '--space-tight': isExport ? '4px' : '6px',          // Tight spacing
+    '--radius-card': isExport ? '0' : '8px',            // Card radius (0 for print)
+    '--border-width': isExport ? '1px' : '1px',
   } as React.CSSProperties
 
-  // In full preview mode, use responsive width; otherwise fixed A4 size
-  // In split mode, we need to ensure the preview fits within the container
-  const isSplitMode = !isFullPreview;
+  const isSplitMode = !isFullPreview
   const previewStyle: React.CSSProperties = {
     ...resumeVariables,
     minWidth: isFullPreview ? '100%' : '210mm',
     maxWidth: isFullPreview ? '210mm' : '210mm',
     width: isFullPreview ? '100%' : '210mm',
-    // In split mode, ensure the preview scales to fit the container
     transformOrigin: 'top center',
   }
 
@@ -80,7 +72,7 @@ export function TemplateRenderer({ data, templateId, colors, isFullPreview = fal
     backgroundColor: colors.background,
     color: colors.text,
     minHeight: isFullPreview ? 'auto' : '297mm',
-    padding: isFullPreview ? '2.5rem' : '2rem 3rem',
+    padding: isExport ? '0' : isFullPreview ? '2.5rem' : '2rem 3rem',
     width: '100%',
     boxSizing: 'border-box',
   }
@@ -91,7 +83,7 @@ export function TemplateRenderer({ data, templateId, colors, isFullPreview = fal
       style={previewStyle}
     >
       <div
-        className="rounded-xl shadow-inner"
+        className="resume-inner"
         style={innerStyle}
       >
         {renderTemplate()}
@@ -100,7 +92,6 @@ export function TemplateRenderer({ data, templateId, colors, isFullPreview = fal
   )
 }
 
-// Template metadata for the builder
 export const TEMPLATE_METADATA = [
   {
     id: 'modern-1',

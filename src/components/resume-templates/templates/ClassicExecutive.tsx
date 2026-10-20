@@ -12,9 +12,10 @@ interface ClassicExecutiveProps {
     text: string
     heading: string
   }
+  isExport?: boolean
 }
 
-export function ClassicExecutive({ data, colors }: ClassicExecutiveProps) {
+export function ClassicExecutive({ data, colors, isExport = false }: ClassicExecutiveProps) {
   const { personal, summary, experience, education, skills, projects, certifications, languages, custom_sections } = data
 
   const style = {
@@ -42,10 +43,25 @@ export function ClassicExecutive({ data, colors }: ClassicExecutiveProps) {
     return `${startDate} – ${endDate}`
   }
 
+  const sectionStyle = {
+    marginBottom: 'var(--space-section)',
+  }
+
+  const headingStyle2 = {
+    ...headingStyle,
+    fontSize: '0.875rem',
+    marginBottom: 'var(--space-heading)',
+    paddingBottom: '8px',
+  }
+
+  const entryStyle = {
+    marginBottom: 'var(--space-entry)',
+  }
+
   return (
     <div className="classic-executive-template w-full" style={style} data-template="classic-executive">
       {/* Header - Centered */}
-      <header className="mb-5 pb-4 text-center border-b-2" style={{ borderColor: colors.primary }}>
+      <header className="mb-[var(--space-section)] pb-[var(--space-heading)] text-center border-b-2" style={{ borderColor: colors.primary }}>
         <h1 className="text-3xl md:text-4xl font-bold mb-2" style={headingStyle}>
           {personal.firstName} {personal.lastName}
         </h1>
@@ -75,8 +91,8 @@ export function ClassicExecutive({ data, colors }: ClassicExecutiveProps) {
 
       {/* Professional Summary */}
       {summary && (
-        <section className="mb-5">
-          <h2 className="text-base font-bold mb-2 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="summary">
+          <h2 style={headingStyle2}>
             Professional Summary
           </h2>
           <p className="leading-relaxed text-[0.94rem] whitespace-pre-wrap" style={{ color: colors.text }}>{summary}</p>
@@ -89,14 +105,14 @@ export function ClassicExecutive({ data, colors }: ClassicExecutiveProps) {
 
       {/* Professional Experience */}
       {experience.length > 0 && (
-        <section className="mb-5">
-          <h2 className="text-base font-bold mb-2 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="experience">
+          <h2 style={headingStyle2}>
             Professional Experience
           </h2>
-          <div className="space-y-2.5">
+          <div className="space-y-[var(--space-entry)]">
             {experience.map((exp) => (
-              <div key={exp.id}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-2">
+              <div key={exp.id} style={entryStyle}>
+                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-[var(--space-tight)]">
                   <div>
                     <h3 className="font-bold" style={{ color: colors.heading }}>{exp.position}</h3>
                     <p className="font-normal" style={{ color: colors.accent }}>{exp.company}</p>
@@ -109,14 +125,14 @@ export function ClassicExecutive({ data, colors }: ClassicExecutiveProps) {
                   </div>
                 </div>
                 {exp.description.length > 0 && (
-                  <ul className="list-disc list-inside space-y-1 ml-4" style={{ color: colors.text }}>
+                  <ul className="list-disc list-inside space-y-[var(--space-item)] ml-4" style={{ color: colors.text }}>
                     {exp.description.map((desc, i) => (
                       <li key={i} className="leading-relaxed">{desc}</li>
                     ))}
                   </ul>
                 )}
                 {exp.technologies.length > 0 && (
-                  <p className="mt-3 text-sm text-[var(--muted-foreground)]">
+                  <p className="mt-[var(--space-item)] text-sm text-[var(--muted-foreground)]">
                     <span className="font-medium">Technologies: </span>
                     {exp.technologies.join(', ')}
                   </p>
@@ -129,13 +145,13 @@ export function ClassicExecutive({ data, colors }: ClassicExecutiveProps) {
 
       {/* Education */}
       {education.length > 0 && (
-        <section className="mb-5">
-          <h2 className="text-base font-bold mb-2 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="education">
+          <h2 style={headingStyle2}>
             Education
           </h2>
-          <div className="space-y-2.5">
+          <div className="space-y-[var(--space-entry)]">
             {education.map((edu) => (
-              <div key={edu.id}>
+              <div key={edu.id} style={entryStyle}>
                 <div className="flex flex-col md:flex-row md:justify-between gap-2">
                   <div>
                     <p className="font-bold" style={{ color: colors.heading }}>
@@ -171,8 +187,8 @@ export function ClassicExecutive({ data, colors }: ClassicExecutiveProps) {
         <aside className="min-w-0 lg:border-l lg:pl-6" style={{ borderColor: `${colors.primary}30` }}>
       {/* Skills */}
       {skills.length > 0 && (
-        <section className="mb-5">
-          <h2 className="text-base font-bold mb-2 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="skills">
+          <h2 style={headingStyle2}>
             Core Competencies
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -201,11 +217,11 @@ export function ClassicExecutive({ data, colors }: ClassicExecutiveProps) {
 
       {/* Certifications */}
       {certifications.length > 0 && (
-        <section className="mb-5">
-          <h2 className="text-base font-bold mb-2 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="certifications">
+          <h2 style={headingStyle2}>
             Certifications
           </h2>
-          <div className="space-y-2.5">
+          <div className="space-y-[var(--space-item)]">
             {certifications.map((cert) => (
               <div key={cert.id} className="p-3 border-l-4" style={{ borderColor: colors.primary }}>
                 <div className="flex flex-col md:flex-row md:justify-between gap-2">
@@ -231,8 +247,8 @@ export function ClassicExecutive({ data, colors }: ClassicExecutiveProps) {
 
       {/* Languages */}
       {languages.length > 0 && (
-        <section className="mb-5">
-          <h2 className="text-base font-bold mb-2 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="languages">
+          <h2 style={headingStyle2}>
             Languages
           </h2>
           <p style={{ color: colors.text }}>
@@ -247,11 +263,11 @@ export function ClassicExecutive({ data, colors }: ClassicExecutiveProps) {
 
       {/* Custom Sections */}
       {custom_sections.map((section) => (
-        <section key={section.id} className="mb-8">
-          <h2 className="text-base font-bold mb-2 pb-1 border-b-2" style={headingStyle}>
+        <section key={section.id} style={sectionStyle} data-section={`custom-${section.id}`}>
+          <h2 style={headingStyle2}>
             {section.title.toUpperCase()}
           </h2>
-          <div className="space-y-2.5">
+          <div className="space-y-[var(--space-item)]">
             {section.items.map((item) => (
               <div key={item.id} className="pl-4 border-l-2" style={{ borderColor: colors.secondary }}>
                 <h3 className="font-bold" style={{ color: colors.heading }}>{item.title}</h3>

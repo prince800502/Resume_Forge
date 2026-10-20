@@ -12,9 +12,10 @@ interface MinimalEssentialsProps {
     text: string
     heading: string
   }
+  isExport?: boolean
 }
 
-export function MinimalEssentials({ data, colors }: MinimalEssentialsProps) {
+export function MinimalEssentials({ data, colors, isExport = false }: MinimalEssentialsProps) {
   const { personal, summary, experience, education, skills, projects, certifications, languages, custom_sections } = data
 
   const style = {
@@ -41,10 +42,26 @@ export function MinimalEssentials({ data, colors }: MinimalEssentialsProps) {
     return `${startDate} – ${endDate}`
   }
 
+  const sectionStyle = {
+    marginBottom: 'var(--space-section)',
+  }
+
+  const headingStyle2 = {
+    ...headingStyle,
+    fontSize: '0.75rem',
+    textTransform: 'uppercase' as const,
+    letterSpacing: '0.1em',
+    marginBottom: 'var(--space-heading)',
+  }
+
+  const entryStyle = {
+    marginBottom: 'var(--space-entry)',
+  }
+
   return (
     <div className="minimal-essentials-template" style={style} data-template="minimal-essentials">
       {/* Header - Clean and minimal */}
-      <header className="mb-10 pb-6 border-b" style={{ borderColor: `${colors.primary}30` }}>
+      <header className="mb-[var(--space-section)] pb-[var(--space-heading)] border-b" style={{ borderColor: `${colors.primary}30` }}>
         <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl mb-1" style={headingStyle}>
@@ -88,8 +105,8 @@ export function MinimalEssentials({ data, colors }: MinimalEssentialsProps) {
 
       {/* Summary */}
       {summary && (
-        <section className="mb-10">
-          <h2 className="text-sm font-semibold mb-3 tracking-wide" style={{ ...headingStyle, textTransform: 'uppercase' }}>
+        <section style={sectionStyle} data-section="summary">
+          <h2 style={headingStyle2}>
             Summary
           </h2>
           <p className="text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">{summary}</p>
@@ -98,14 +115,14 @@ export function MinimalEssentials({ data, colors }: MinimalEssentialsProps) {
 
       {/* Experience */}
       {experience.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-sm font-semibold mb-4 tracking-wide" style={{ ...headingStyle, textTransform: 'uppercase' }}>
+        <section style={sectionStyle} data-section="experience">
+          <h2 style={headingStyle2}>
             Experience
           </h2>
-          <div className="space-y-6">
+          <div className="space-y-[var(--space-entry)]">
             {experience.map((exp) => (
-              <div key={exp.id}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-1">
+              <div key={exp.id} style={entryStyle}>
+                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-[var(--space-tight)]">
                   <div>
                     <h3 className="font-medium text-lg" style={headingStyle}>{exp.position}</h3>
                     <p style={{ color: colors.accent }}>{exp.company}</p>
@@ -118,14 +135,14 @@ export function MinimalEssentials({ data, colors }: MinimalEssentialsProps) {
                   </div>
                 </div>
                 {exp.description.length > 0 && (
-                  <ul className="list-disc list-inside space-y-1 text-[var(--foreground)] leading-relaxed ml-4">
+                  <ul className="list-disc list-inside space-y-[var(--space-item)] text-[var(--foreground)] leading-relaxed ml-4">
                     {exp.description.map((desc, i) => (
                       <li key={i}>{desc}</li>
                     ))}
                   </ul>
                 )}
                 {exp.technologies.length > 0 && (
-                  <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+                  <p className="mt-[var(--space-item)] text-sm text-[var(--muted-foreground)]">
                     <span style={{ color: colors.primary }}>Stack:</span> {exp.technologies.join(', ')}
                   </p>
                 )}
@@ -137,13 +154,13 @@ export function MinimalEssentials({ data, colors }: MinimalEssentialsProps) {
 
       {/* Education */}
       {education.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-sm font-semibold mb-4 tracking-wide" style={{ ...headingStyle, textTransform: 'uppercase' }}>
+        <section style={sectionStyle} data-section="education">
+          <h2 style={headingStyle2}>
             Education
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-[var(--space-item)]">
             {education.map((edu) => (
-              <div key={edu.id} className="flex flex-col md:flex-row md:justify-between gap-2">
+              <div key={edu.id} className="flex flex-col md:flex-row md:justify-between gap-2" style={entryStyle}>
                 <div>
                   <p className="font-medium" style={headingStyle}>
                     {edu.degree}{edu.field && ` in ${edu.field}`}
@@ -164,8 +181,8 @@ export function MinimalEssentials({ data, colors }: MinimalEssentialsProps) {
 
       {/* Skills */}
       {skills.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-sm font-semibold mb-3 tracking-wide" style={{ ...headingStyle, textTransform: 'uppercase' }}>
+        <section style={sectionStyle} data-section="skills">
+          <h2 style={headingStyle2}>
             Skills
           </h2>
           <p className="text-[var(--foreground)]">
@@ -180,14 +197,14 @@ export function MinimalEssentials({ data, colors }: MinimalEssentialsProps) {
 
       {/* Projects */}
       {projects.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-sm font-semibold mb-4 tracking-wide" style={{ ...headingStyle, textTransform: 'uppercase' }}>
+        <section style={sectionStyle} data-section="projects">
+          <h2 style={headingStyle2}>
             Projects
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-[var(--space-item)]">
             {projects.map((project) => (
-              <div key={project.id}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-1">
+              <div key={project.id} style={entryStyle}>
+                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-[var(--space-tight)]">
                   <h3 className="font-medium" style={headingStyle}>{project.name}</h3>
                   <div className="flex gap-3">
                     {project.url && (
@@ -202,7 +219,7 @@ export function MinimalEssentials({ data, colors }: MinimalEssentialsProps) {
                     )}
                   </div>
                 </div>
-                <p className="text-[var(--foreground)] text-sm mb-1">{project.description}</p>
+                <p className="text-[var(--foreground)] text-sm mb-[var(--space-tight)]">{project.description}</p>
                 {project.technologies.length > 0 && (
                   <p className="text-xs text-[var(--muted-foreground)]">
                     {project.technologies.join(', ')}
@@ -216,14 +233,14 @@ export function MinimalEssentials({ data, colors }: MinimalEssentialsProps) {
 
       {/* Certifications */}
       {certifications.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-sm font-semibold mb-3 tracking-wide" style={{ ...headingStyle, textTransform: 'uppercase' }}>
+        <section style={sectionStyle} data-section="certifications">
+          <h2 style={headingStyle2}>
             Certifications
           </h2>
-          <div className="space-y-2">
+          <div className="space-y-[var(--space-tight)]">
             {certifications.map((cert) => (
               <div key={cert.id} className="flex flex-col md:flex-row md:justify-between gap-2 p-3" 
-                   style={{ borderColor: `${colors.primary}20`, borderWidth: '1px', borderStyle: 'solid', borderRadius: '4px' }}>
+                   style={{ borderColor: `${colors.primary}20`, borderWidth: '1px', borderStyle: 'solid', borderRadius: 'var(--radius-card)' }}>
                 <div>
                   <p className="font-medium" style={headingStyle}>{cert.name}</p>
                   <p className="text-sm text-[var(--muted-foreground)]">{cert.issuer} • {formatDate(cert.date)}</p>
@@ -241,8 +258,8 @@ export function MinimalEssentials({ data, colors }: MinimalEssentialsProps) {
 
       {/* Languages */}
       {languages.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-sm font-semibold mb-3 tracking-wide" style={{ ...headingStyle, textTransform: 'uppercase' }}>
+        <section style={sectionStyle} data-section="languages">
+          <h2 style={headingStyle2}>
             Languages
           </h2>
           <p className="text-[var(--foreground)]">
@@ -257,11 +274,11 @@ export function MinimalEssentials({ data, colors }: MinimalEssentialsProps) {
 
       {/* Custom Sections */}
       {custom_sections.map((section) => (
-        <section key={section.id} className="mb-10">
-          <h2 className="text-sm font-semibold mb-3 tracking-wide" style={{ ...headingStyle, textTransform: 'uppercase' }}>
+        <section key={section.id} style={sectionStyle} data-section={`custom-${section.id}`}>
+          <h2 style={headingStyle2}>
             {section.title}
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-[var(--space-item)]">
             {section.items.map((item) => (
               <div key={item.id} className="pl-4 border-l" style={{ borderColor: `${colors.primary}30` }}>
                 <h3 className="font-medium" style={headingStyle}>{item.title}</h3>

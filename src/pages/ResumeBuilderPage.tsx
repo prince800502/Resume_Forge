@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { createRoot } from 'react-dom/client'
 import { useParams, useNavigate } from 'react-router-dom'
 import { gsap } from 'gsap'
 import { 
@@ -25,9 +24,9 @@ import { FloatingParticles, MorphingBlobs, PageTransition } from '@/components/a
 import { AISuggestionsPanel } from '@/components/ai-assistant/AISuggestionsPanel'
 import toast from 'react-hot-toast'
 import { clsx } from 'clsx'
-import html2canvas from 'html2canvas'
-import { jsPDF } from 'jspdf'
 import { exportResumeToDocx, getSafeFileName as getDocxSafeFileName, triggerDownload } from '@/utils/docxExport'
+import { downloadResumeAsPdf } from '@/utils/pdfExport'
+import { downloadResumeAsPng } from '@/utils/pngExport'
 
 interface ResumeBuilderPageProps {}
 
@@ -281,346 +280,25 @@ export function ResumeBuilderPage() {
     }
   }, [handleDataChange, resume])
   
-  // Export functions
-  // Create a temporary export preview element that's independent of the view mode
-  const createExportElement = () => {
-    // Create a container for the export - use absolute positioning off-screen but VISIBLE
-    // html2canvas cannot capture elements with visibility:hidden or negative z-index
-    const exportContainer = document.createElement('div')
-    exportContainer.className = 'resume-export-container'
-    exportContainer.style.position = 'absolute'
-    exportContainer.style.left = '-9999px'
-    exportContainer.style.top = '0'
-    exportContainer.style.width = '210mm'
-    exportContainer.style.pointerEvents = 'none'
-    // DO NOT use visibility:hidden or z-index:-1 - these prevent html2canvas from capturing
-    exportContainer.style.zIndex = '0'
-    exportContainer.style.overflow = 'visible'
-    
-    // Apply the CSS variables that TemplateRenderer and templates depend on
-    exportContainer.style.setProperty('--foreground', templateColors.text, 'important')
-    exportContainer.style.setProperty('--muted-foreground', templateColors.secondary, 'important')
-    exportContainer.style.setProperty('--background', templateColors.background, 'important')
-    exportContainer.style.setProperty('--card', templateColors.background, 'important')
-    exportContainer.style.setProperty('--primary', templateColors.primary, 'important')
-    exportContainer.style.setProperty('--accent', templateColors.accent, 'important')
-    exportContainer.style.setProperty('--heading', templateColors.heading, 'important')
-    exportContainer.style.backgroundColor = templateColors.background
-    exportContainer.style.color = templateColors.text
-    exportContainer.style.boxSizing = 'border-box'
-    
-    // Create the inner content div where TemplateRenderer will render
-    // This div will receive the .resume-preview class from TemplateRenderer
-    const contentDiv = document.createElement('div')
-    contentDiv.id = 'resume-export-content'
-    contentDiv.style.width = '100%'
-    contentDiv.style.boxSizing = 'border-box'
-    
-    exportContainer.appendChild(contentDiv)
-    
-    // Render the TemplateRenderer component directly into contentDiv
-    // TemplateRenderer will create its own .resume-preview element inside contentDiv
-    const root = createRoot(contentDiv)
-    root.render(
-      <TemplateRenderer
-        data={resumeData}
-        templateId={activeTemplateId}
-        colors={templateColors}
-        isFullPreview={true}
-      />
-    )
-    
-    document.body.appendChild(exportContainer)
-    return { exportContainer, contentDiv, root }
-  }
-  
-  // Wait for React to finish rendering, fonts to load, and layout to stabilize
-  const waitForExportReady = async (contentDiv: HTMLElement) => {
-    // Wait for fonts to load
-    if (document.fonts?.ready) {
-      await document.fonts.ready
-    }
-    
-    // Wait for React to finish rendering - use a more robust approach
-    // React 18's createRoot.render is synchronous for the initial render, but
-    // layout effects and ref callbacks fire after paint. We need to wait for
-    // the browser to complete layout.
-    await new Promise<void>(resolve => {
-      // Use requestAnimationFrame to wait for the next paint cycle
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          // Additional microtask wait for any deferred work
-          queueMicrotask(() => resolve())
-        })
-      })
-    })
-    
-    // Verify the contentDiv has actual rendered content
-    const resumePreview = contentDiv.querySelector('.resume-preview')
-    if (!resumePreview) {
-      console.warn('[Export] .resume-preview element not found in contentDiv')
-    }
-    
-    // Additional wait for any images to load
-    const images = contentDiv.querySelectorAll('img')
-    if (images.length > 0) {
-      const promises: Promise<void>[] = []
-      for (const img of images) {
-        if (img.complete) continue
-        promises.push(new Promise<void>((resolve) => {
-          img.onload = () => resolve()
-          img.onerror = () => resolve() // Don't fail on image errors
-        }))
-      }
-      await Promise.all(promises)
-    }
-    
-    // Final layout stabilization - wait one more frame after images load
-    await new Promise<void>(resolve => requestAnimationFrame(() => resolve()))
-  }
-  
-  const cleanupExportElement = (exportContainer: HTMLElement, root?: ReturnType<typeof createRoot>) => {
-    if (root) {
-      root.unmount()
-    }
-    if (exportContainer && exportContainer.parentNode) {
-      exportContainer.parentNode.removeChild(exportContainer)
-    }
-  }
-  
-  const getExportElement = () => {
-    // Fallback to existing preview element for backward compatibility
-    return previewRef.current?.querySelector('.resume-preview') as HTMLElement | null
-  }
-  
-  const getSafeFileName = (title: string, extension: string) => {
-    const safeTitle = title
-      .trim()
-      .replace(/[<>:"/\\|?*\x00-\x1F]/g, '')
-      .replace(/\s+/g, '_')
-      .slice(0, 100) || 'Resume'
-  
-    return `${safeTitle}.${extension}`
-  }
-  
-  const captureResumeCanvas = async (contentDiv: HTMLElement) => {
-    // Find the actual .resume-preview element rendered by TemplateRenderer inside contentDiv
-    const resumePreview = contentDiv.querySelector('.resume-preview') as HTMLElement | null
-    
-    if (!resumePreview) {
-      throw new Error('Resume preview element not found in export content')
-    }
-
-    const rect = resumePreview.getBoundingClientRect()
-
-    if (rect.width <= 0 || rect.height <= 0) {
-      throw new Error('Resume preview has no visible dimensions')
-    }
-
-    const captureOptions = {
-      scale: Math.min(2.5, Math.max(2, window.devicePixelRatio || 1)),
-      useCORS: true,
-      allowTaint: false,
-      logging: true,
-      backgroundColor: templateColors.background,
-      imageTimeout: 15000,
-      width: Math.ceil(rect.width),
-      height: Math.ceil(rect.height),
-      windowWidth: Math.max(document.documentElement.clientWidth, Math.ceil(rect.width)),
-      windowHeight: Math.max(document.documentElement.clientHeight, Math.ceil(rect.height)),
-      scrollX: 0,
-      scrollY: 0,
-      onclone: (clonedDocument: Document) => {
-        // In the cloned document, find the .resume-preview element
-        // Use the ID we set on the contentDiv to find the right one
-        const clonedContent = clonedDocument.getElementById('resume-export-content')
-        if (!clonedContent) return
-        
-        const clonedResume = clonedContent.querySelector('.resume-preview') as HTMLElement | null
-        if (!clonedResume) return
-
-        // Keep the resume independent from the application's dark/light theme.
-        clonedResume.style.setProperty('--foreground', templateColors.text, 'important')
-        clonedResume.style.setProperty('--muted-foreground', templateColors.secondary, 'important')
-        clonedResume.style.setProperty('--background', templateColors.background, 'important')
-        clonedResume.style.setProperty('--card', templateColors.background, 'important')
-        clonedResume.style.setProperty('--primary', templateColors.primary, 'important')
-        clonedResume.style.setProperty('--accent', templateColors.accent, 'important')
-        clonedResume.style.setProperty('--heading', templateColors.heading, 'important')
-
-        clonedResume.style.backgroundColor = templateColors.background
-        clonedResume.style.color = templateColors.text
-        clonedResume.style.transform = 'none'
-        clonedResume.style.opacity = '1'
-        clonedResume.style.visibility = 'visible'
-        clonedResume.style.position = 'relative'
-        clonedResume.style.left = '0'
-        clonedResume.style.top = '0'
-
-        const inner = clonedResume.firstElementChild as HTMLElement | null
-        if (inner) {
-          inner.style.backgroundColor = templateColors.background
-          inner.style.color = templateColors.text
-          inner.style.transform = 'none'
-          inner.style.opacity = '1'
-          inner.style.visibility = 'visible'
-        }
-      },
-    }
-
-    let canvas = await html2canvas(resumePreview, captureOptions)
-
-    // Diagnostic: log canvas info
-    console.log('[Export] Canvas captured:', {
-      width: canvas.width,
-      height: canvas.height,
-      isBlank: isCanvasBlank(canvas)
-    })
-
-    // html2canvas can occasionally produce an empty canvas when a page
-    // contains theme CSS variables. Retry with foreignObject rendering.
-    if (canvas.width === 0 || canvas.height === 0 || isCanvasBlank(canvas)) {
-      console.log('[Export] First capture blank, retrying with foreignObjectRendering...')
-      canvas = await html2canvas(resumePreview, {
-        ...captureOptions,
-        foreignObjectRendering: true,
-      })
-      console.log('[Export] Retry canvas:', {
-        width: canvas.width,
-        height: canvas.height,
-        isBlank: isCanvasBlank(canvas)
-      })
-    }
-
-    if (canvas.width === 0 || canvas.height === 0 || isCanvasBlank(canvas)) {
-      throw new Error('The resume could not be rendered for export - canvas is blank')
-    }
-
-    return canvas
-  }
-  
-  const isCanvasBlank = (canvas: HTMLCanvasElement) => {
-    const sampleCanvas = document.createElement('canvas')
-    sampleCanvas.width = Math.min(canvas.width, 100)
-    sampleCanvas.height = Math.min(canvas.height, 100)
-  
-    const ctx = sampleCanvas.getContext('2d')
-    if (!ctx) return false
-  
-    ctx.drawImage(
-      canvas,
-      0,
-      0,
-      canvas.width,
-      canvas.height,
-      0,
-      0,
-      sampleCanvas.width,
-      sampleCanvas.height
-    )
-  
-    const pixels = ctx.getImageData(
-      0,
-      0,
-      sampleCanvas.width,
-      sampleCanvas.height
-    ).data
-  
-    // A completely transparent canvas is definitely blank.
-    for (let i = 3; i < pixels.length; i += 4) {
-      if (pixels[i] !== 0) return false
-    }
-  
-    return true
-  }
-  
+// Export functions - using new professional export utilities
   const exportAsPDF = async () => {
     const current = resume
     if (!current) {
       toast.error('Resume not found')
       return
     }
- 
+
     setIsExporting(true)
- 
+
     try {
-      // Create a dedicated export element that works regardless of view mode
-      const { exportContainer, contentDiv, root } = createExportElement()
-      
-      try {
-        // Wait for React rendering and fonts to load
-        await waitForExportReady(contentDiv)
-        
-        const canvas = await captureResumeCanvas(contentDiv)
-        const imgData = canvas.toDataURL('image/png', 1.0)
- 
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: 'a4',
-          compress: true,
-        })
- 
-        // A4 dimensions in mm
-        const pageWidth = pdf.internal.pageSize.getWidth()   // 210mm
-        const pageHeight = pdf.internal.pageSize.getHeight() // 297mm
-        
-        // Use margins (15mm on each side = 30mm total horizontal, 20mm top/bottom = 40mm total vertical)
-        const marginX = 15
-        const marginY = 20
-        const usableWidth = pageWidth - 2 * marginX   // 180mm
-        const usableHeight = pageHeight - 2 * marginY // 257mm
- 
-        // Canvas dimensions in pixels
-        const canvasWidth = canvas.width
-        const canvasHeight = canvas.height
- 
-        // Calculate scale to fit canvas width to usable page width (preserving aspect ratio)
-        const scale = usableWidth / canvasWidth
-        const renderWidth = canvasWidth * scale
-        const renderHeight = canvasHeight * scale
- 
-        if (renderHeight <= usableHeight) {
-          // Content fits on one page - center it horizontally
-          const x = marginX
-          const y = marginY
-          pdf.addImage(imgData, 'PNG', x, y, renderWidth, renderHeight)
-        } else {
-          // Content spans multiple pages - split the canvas
-          const pageCount = Math.ceil(renderHeight / usableHeight)
-          
-          for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
-            if (pageIndex > 0) {
-              pdf.addPage()
-            }
-            
-            // Calculate the source rectangle for this page (in canvas pixels)
-            const sourceY = (pageIndex * usableHeight) / scale
-            const sourceHeight = Math.min(usableHeight / scale, canvasHeight - sourceY)
-            
-            // Create a temporary canvas for this page slice
-            const sliceCanvas = document.createElement('canvas')
-            sliceCanvas.width = canvasWidth
-            sliceCanvas.height = sourceHeight
-            const sliceCtx = sliceCanvas.getContext('2d')!
-            sliceCtx.drawImage(
-              canvas,
-              0, sourceY, canvasWidth, sourceHeight,
-              0, 0, canvasWidth, sourceHeight
-            )
-            
-            const sliceImgData = sliceCanvas.toDataURL('image/png', 1.0)
-            const sliceRenderHeight = sourceHeight * scale
-            
-            pdf.addImage(sliceImgData, 'PNG', marginX, marginY, renderWidth, sliceRenderHeight)
-          }
-        }
- 
-        pdf.save(getSafeFileName(current.title, 'pdf'))
-        toast.success('PDF downloaded successfully')
-      } finally {
-        cleanupExportElement(exportContainer, root)
-      }
+      await downloadResumeAsPdf(current.data, current.title, {
+        templateId: activeTemplateIdRef.current,
+        colors: templateColors,
+        onProgress: (stage, progress) => {
+          console.log(`[PDF Export] ${stage} (${progress}%)`)
+        },
+      })
+      toast.success('PDF downloaded successfully')
     } catch (error) {
       console.error('PDF export error:', error)
       toast.error('Failed to export PDF. Please try again.')
@@ -629,54 +307,25 @@ export function ResumeBuilderPage() {
       setShowExportModal(false)
     }
   }
- 
-const exportAsPNG = async () => {
+
+  const exportAsPNG = async () => {
     const current = resume
     if (!current) {
       toast.error('Resume not found')
       return
     }
-  
+
     setIsExporting(true)
-  
+
     try {
-      // Create a dedicated export element that works regardless of view mode
-      const { exportContainer, contentDiv, root } = createExportElement()
-      
-      try {
-        // Wait for React rendering and fonts to load
-        await waitForExportReady(contentDiv)
-  
-        const canvas = await captureResumeCanvas(contentDiv)
-  
-        // Wrap toBlob in a Promise to ensure proper async handling
-        const blob = await new Promise<Blob | null>((resolve) => {
-          canvas.toBlob((blob) => {
-            resolve(blob)
-          }, 'image/png', 1.0)
-        })
-  
-        if (!blob) {
-          toast.error('Failed to create PNG')
-          return
-        }
-  
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-  
-        link.href = url
-        link.download = getSafeFileName(current.title, 'png')
-        link.style.display = 'none'
-  
-        document.body.appendChild(link)
-        link.click()
-        link.remove()
-  
-        setTimeout(() => URL.revokeObjectURL(url), 1000)
-        toast.success('PNG downloaded successfully')
-      } finally {
-        cleanupExportElement(exportContainer, root)
-      }
+      await downloadResumeAsPng(current.data, current.title, {
+        templateId: activeTemplateIdRef.current,
+        colors: templateColors,
+        onProgress: (stage, progress) => {
+          console.log(`[PNG Export] ${stage} (${progress}%)`)
+        },
+      })
+      toast.success('PNG downloaded successfully')
     } catch (error) {
       console.error('PNG export error:', error)
       toast.error('Failed to export PNG. Please try again.')
@@ -685,47 +334,47 @@ const exportAsPNG = async () => {
       setShowExportModal(false)
     }
   }
-  
+
   const exportAsJSON = () => {
     const current = resume
     if (!current) return
-  
+
     const blob = new Blob([JSON.stringify(current, null, 2)], {
       type: 'application/json',
     })
-  
+
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-  
+
     a.href = url
-    a.download = getSafeFileName(current.title, 'json')
+    a.download = getDocxSafeFileName(current.title, 'json')
     a.style.display = 'none'
-  
+
     document.body.appendChild(a)
     a.click()
     a.remove()
-  
+
     setTimeout(() => URL.revokeObjectURL(url), 1000)
-  
+
     toast.success('JSON downloaded successfully')
     setShowExportModal(false)
   }
-  
+
   const exportAsDOCX = async () => {
     const current = resume
     if (!current) {
       toast.error('Resume not found')
       return
     }
-  
+
     setIsExporting(true)
-  
+
     try {
       const blob = await exportResumeToDocx(current.data, {
         templateId: activeTemplateIdRef.current,
         colors: templateColors,
       })
-  
+
       triggerDownload(blob, getDocxSafeFileName(current.title, 'docx'))
       toast.success('Word document downloaded successfully')
     } catch (error) {
@@ -736,7 +385,7 @@ const exportAsPNG = async () => {
       setShowExportModal(false)
     }
   }
-  
+
   const handleExport = () => {
     switch (exportFormat) {
       case 'pdf':

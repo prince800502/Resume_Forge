@@ -12,9 +12,10 @@ interface ModernProfessionalProps {
     text: string
     heading: string
   }
+  isExport?: boolean
 }
 
-export function ModernProfessional({ data, colors }: ModernProfessionalProps) {
+export function ModernProfessional({ data, colors, isExport = false }: ModernProfessionalProps) {
   const { personal, summary, experience, education, skills, projects, certifications, languages, custom_sections } = data
 
   const style = {
@@ -40,16 +41,34 @@ export function ModernProfessional({ data, colors }: ModernProfessionalProps) {
   const getDateRange = (start: string, end: string, current: boolean) => {
     const startDate = formatDate(start)
     const endDate = current ? 'Present' : formatDate(end)
-    return `${startDate} - ${endDate}`
+    return `${startDate} – ${endDate}`
+  }
+
+  const sectionStyle = {
+    marginBottom: 'var(--space-section)',
+  }
+
+  const headingStyle2 = {
+    ...headingStyle,
+    marginBottom: 'var(--space-heading)',
+    paddingBottom: '8px',
+  }
+
+  const entryStyle = {
+    marginBottom: 'var(--space-entry)',
+  }
+
+  const itemStyle = {
+    marginBottom: 'var(--space-item)',
   }
 
   return (
     <div className="modern-professional-template" style={style} data-template="modern-professional">
       {/* Header */}
-      <header className="mb-8 pb-6 border-b-2" style={{ borderColor: colors.primary }}>
+      <header className="mb-[var(--space-section)] pb-[var(--space-heading)] border-b-2" style={{ borderColor: colors.primary }}>
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-1" style={headingStyle}>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2" style={headingStyle}>
               {personal.firstName} {personal.lastName}
             </h1>
             <p className="text-lg font-medium mb-2" style={accentStyle}>
@@ -84,8 +103,8 @@ export function ModernProfessional({ data, colors }: ModernProfessionalProps) {
 
       {/* Professional Summary */}
       {summary && (
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-3 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="summary">
+          <h2 className="text-xl font-semibold" style={headingStyle2}>
             Professional Summary
           </h2>
           <p className="text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">{summary}</p>
@@ -94,14 +113,14 @@ export function ModernProfessional({ data, colors }: ModernProfessionalProps) {
 
       {/* Experience */}
       {experience.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-3 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="experience">
+          <h2 className="text-xl font-semibold" style={headingStyle2}>
             Professional Experience
           </h2>
-          <div className="space-y-6">
+          <div className="space-y-[var(--space-entry)]">
             {experience.map((exp, index) => (
-              <div key={exp.id} className="pl-4 border-l-2" style={{ borderColor: colors.primary }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-2">
+              <div key={exp.id} className="pl-4 border-l-2" style={{ ...entryStyle, borderColor: colors.primary }}>
+                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-[var(--space-tight)]">
                   <div>
                     <h3 className="text-lg font-semibold" style={{ color: colors.heading }}>{exp.position}</h3>
                     <p className="text-[var(--foreground)]" style={{ color: colors.accent }}>{exp.company}</p>
@@ -114,14 +133,14 @@ export function ModernProfessional({ data, colors }: ModernProfessionalProps) {
                   </div>
                 </div>
                 {exp.description.length > 0 && (
-                  <ul className="list-disc list-inside space-y-1 text-[var(--foreground)]">
+                  <ul className="list-disc list-inside space-y-[var(--space-item)] text-[var(--foreground)]">
                     {exp.description.map((desc, i) => (
                       <li key={i} className="leading-relaxed">{desc}</li>
                     ))}
                   </ul>
                 )}
                 {exp.technologies.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-[var(--space-item)] flex flex-wrap gap-2">
                     {exp.technologies.map((tech, i) => (
                       <span key={i} className="px-2 py-1 text-xs rounded-full border" 
                             style={{ borderColor: colors.primary, color: colors.primary }}>
@@ -138,13 +157,13 @@ export function ModernProfessional({ data, colors }: ModernProfessionalProps) {
 
       {/* Education */}
       {education.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-3 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="education">
+          <h2 className="text-xl font-semibold" style={headingStyle2}>
             Education
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-[var(--space-entry)]">
             {education.map((edu) => (
-              <div key={edu.id} className="pl-4 border-l-2" style={{ borderColor: colors.secondary }}>
+              <div key={edu.id} className="pl-4 border-l-2" style={{ ...entryStyle, borderColor: colors.secondary }}>
                 <div className="flex flex-col md:flex-row md:justify-between gap-2">
                   <div>
                     <h3 className="font-semibold" style={{ color: colors.heading }}>{edu.degree} in {edu.field}</h3>
@@ -171,18 +190,18 @@ export function ModernProfessional({ data, colors }: ModernProfessionalProps) {
 
       {/* Skills */}
       {skills.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-3 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="skills">
+          <h2 className="text-xl font-semibold" style={headingStyle2}>
             Skills
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-[var(--space-entry)]">
             {['technical', 'framework', 'database', 'cloud', 'tool', 'language', 'soft', 'other'].map(category => {
               const categorySkills = skills.filter(s => s.category === category)
               if (categorySkills.length === 0) return null
               
               return (
                 <div key={category}>
-                  <h3 className="text-sm font-medium mb-2 capitalize" style={{ color: colors.heading }}>
+                  <h3 className="text-sm font-medium mb-[var(--space-tight)] capitalize" style={{ color: colors.heading }}>
                     {category.replace('_', ' ')}
                   </h3>
                   <div className="flex flex-wrap gap-2">
@@ -203,14 +222,14 @@ export function ModernProfessional({ data, colors }: ModernProfessionalProps) {
 
       {/* Projects */}
       {projects.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-3 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="projects">
+          <h2 className="text-xl font-semibold" style={headingStyle2}>
             Projects
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-[var(--space-entry)]">
             {projects.map((project) => (
-              <div key={project.id} className="p-4 rounded-lg border" style={{ borderColor: colors.primary }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-2">
+              <div key={project.id} className="p-4 border" style={{ ...entryStyle, borderColor: colors.primary, borderRadius: 'var(--radius-card)' }}>
+                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-[var(--space-tight)]">
                   <h3 className="font-semibold" style={{ color: colors.heading }}>{project.name}</h3>
                   {project.url && (
                     <a href={project.url} target="_blank" rel="noopener noreferrer" className="text-sm" style={accentStyle}>
@@ -218,9 +237,9 @@ export function ModernProfessional({ data, colors }: ModernProfessionalProps) {
                     </a>
                   )}
                 </div>
-                <p className="text-[var(--foreground)] mb-2">{project.description}</p>
+                <p className="text-[var(--foreground)] mb-[var(--space-item)]">{project.description}</p>
                 {project.technologies.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-2">
+                  <div className="flex flex-wrap gap-2 mb-[var(--space-item)]">
                     {project.technologies.map((tech, i) => (
                       <span key={i} className="px-2 py-1 text-xs rounded-full border" 
                             style={{ borderColor: colors.secondary, color: colors.secondary }}>
@@ -230,7 +249,7 @@ export function ModernProfessional({ data, colors }: ModernProfessionalProps) {
                   </div>
                 )}
                 {project.highlights.length > 0 && (
-                  <ul className="list-disc list-inside space-y-1 text-sm text-[var(--foreground)]">
+                  <ul className="list-disc list-inside space-y-[var(--space-item)] text-sm text-[var(--foreground)]">
                     {project.highlights.map((highlight, i) => (
                       <li key={i}>{highlight}</li>
                     ))}
@@ -244,20 +263,20 @@ export function ModernProfessional({ data, colors }: ModernProfessionalProps) {
 
       {/* Certifications */}
       {certifications.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-3 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="certifications">
+          <h2 className="text-xl font-semibold" style={headingStyle2}>
             Certifications
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-[var(--space-item)]">
             {certifications.map((cert) => (
               <div key={cert.id} className="flex flex-col md:flex-row md:items-center md:justify-between p-3 rounded-lg border" 
-                   style={{ borderColor: colors.primary }}>
+                   style={{ borderColor: colors.primary, borderRadius: 'var(--radius-card)' }}>
                 <div>
                   <h3 className="font-semibold" style={{ color: colors.heading }}>{cert.name}</h3>
                   <p className="text-sm text-[var(--muted-foreground)]">{cert.issuer}</p>
                   <p className="text-sm text-[var(--muted-foreground)]">
                     {formatDate(cert.date)}
-                    {cert.expiryDate && ` - Expires: ${formatDate(cert.expiryDate)}`}
+                    {cert.expiryDate && ` – Expires: ${formatDate(cert.expiryDate)}`}
                     {cert.credentialId && ` | Credential: ${cert.credentialId}`}
                   </p>
                 </div>
@@ -274,8 +293,8 @@ export function ModernProfessional({ data, colors }: ModernProfessionalProps) {
 
       {/* Languages */}
       {languages.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-3 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="languages">
+          <h2 className="text-xl font-semibold" style={headingStyle2}>
             Languages
           </h2>
           <div className="flex flex-wrap gap-3">
@@ -291,17 +310,17 @@ export function ModernProfessional({ data, colors }: ModernProfessionalProps) {
 
       {/* Custom Sections */}
       {custom_sections.map((section) => (
-        <section key={section.id} className="mb-8">
-          <h2 className="text-xl font-semibold mb-3 pb-1 border-b-2" style={headingStyle}>
+        <section key={section.id} style={sectionStyle} data-section={`custom-${section.id}`}>
+          <h2 className="text-xl font-semibold" style={headingStyle2}>
             {section.title}
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-[var(--space-entry)]">
             {section.items.map((item) => (
               <div key={item.id} className="pl-4 border-l-2" style={{ borderColor: colors.secondary }}>
                 <h3 className="font-semibold" style={{ color: colors.heading }}>{item.title}</h3>
                 {item.subtitle && <p className="text-[var(--foreground)]" style={accentStyle}>{item.subtitle}</p>}
                 {item.date && <p className="text-sm text-[var(--muted-foreground)]">{item.date}</p>}
-                {item.description && <p className="text-[var(--foreground)] mt-1">{item.description}</p>}
+                {item.description && <p className="text-[var(--foreground)] mt-[var(--space-tight)]">{item.description}</p>}
               </div>
             ))}
           </div>

@@ -12,9 +12,10 @@ interface TechModernProps {
     text: string
     heading: string
   }
+  isExport?: boolean
 }
 
-export function TechModern({ data, colors }: TechModernProps) {
+export function TechModern({ data, colors, isExport = false }: TechModernProps) {
   const { personal, summary, experience, education, skills, projects, certifications, languages, custom_sections } = data
 
   const style = {
@@ -41,10 +42,25 @@ export function TechModern({ data, colors }: TechModernProps) {
     return `${startDate} – ${endDate}`
   }
 
+  const sectionStyle = {
+    marginBottom: 'var(--space-section)',
+  }
+
+  const headingStyle2 = {
+    ...headingStyle,
+    fontSize: '1rem',
+    marginBottom: 'var(--space-heading)',
+    paddingBottom: '8px',
+  }
+
+  const entryStyle = {
+    marginBottom: 'var(--space-entry)',
+  }
+
   return (
     <div className="tech-modern-template" style={style} data-template="tech-modern">
       {/* Header with accent bar */}
-      <header className="mb-8 relative">
+      <header className="mb-[var(--space-section)] relative">
         <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: colors.primary }} />
         <div className="pl-6">
           <h1 className="text-3xl md:text-4xl font-bold mb-1" style={headingStyle}>
@@ -83,11 +99,11 @@ export function TechModern({ data, colors }: TechModernProps) {
 
       {/* Professional Summary */}
       {summary && (
-        <section className="mb-8">
-          <h2 className="text-lg font-bold mb-3 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="summary">
+          <h2 style={headingStyle2}>
             About
           </h2>
-          <div className="p-4 rounded-lg" style={{ backgroundColor: `${colors.primary}10`, borderColor: `${colors.primary}30` }}>
+          <div className="p-4 rounded-lg" style={{ backgroundColor: `${colors.primary}10`, borderColor: `${colors.primary}30`, borderRadius: 'var(--radius-card)' }}>
             <p className="text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">{summary}</p>
           </div>
         </section>
@@ -95,11 +111,11 @@ export function TechModern({ data, colors }: TechModernProps) {
 
       {/* Tech Stack / Skills - Prominent for tech roles */}
       {skills.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-lg font-bold mb-3 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="skills">
+          <h2 style={headingStyle2}>
             Tech Stack
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-[var(--space-entry)]">
             {['technical', 'framework', 'database', 'cloud', 'tool'].map(category => {
               const categorySkills = skills.filter(s => s.category === category)
               if (categorySkills.length === 0) return null
@@ -112,7 +128,7 @@ export function TechModern({ data, colors }: TechModernProps) {
                   <div className="flex flex-wrap gap-2">
                     {categorySkills.map((skill) => (
                       <span key={skill.id} className="px-3 py-1 text-sm rounded" 
-                            style={{ backgroundColor: `${colors.primary}15`, color: colors.primary, border: `1px solid ${colors.primary}30` }}>
+                            style={{ backgroundColor: `${colors.primary}15`, color: colors.primary, border: `1px solid ${colors.primary}30`, borderRadius: 'var(--radius-card)' }}>
                         {skill.name}
                         <span className="ml-1 text-xs opacity-60">({skill.proficiency})</span>
                       </span>
@@ -147,14 +163,14 @@ export function TechModern({ data, colors }: TechModernProps) {
 
       {/* Experience */}
       {experience.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-lg font-bold mb-4 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="experience">
+          <h2 style={headingStyle2}>
             Experience
           </h2>
-          <div className="space-y-6">
+          <div className="space-y-[var(--space-entry)]">
             {experience.map((exp) => (
-              <div key={exp.id} className="relative pl-6 border-l-2" style={{ borderColor: colors.primary }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-2">
+              <div key={exp.id} className="relative pl-6 border-l-2" style={{ ...entryStyle, borderColor: colors.primary }}>
+                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-[var(--space-tight)]">
                   <div>
                     <h3 className="font-bold" style={{ color: colors.heading }}>{exp.position}</h3>
                     <p className="font-medium" style={{ color: colors.accent }}>{exp.company}</p>
@@ -167,17 +183,17 @@ export function TechModern({ data, colors }: TechModernProps) {
                   </div>
                 </div>
                 {exp.description.length > 0 && (
-                  <ul className="list-disc list-inside space-y-1 text-[var(--foreground)] ml-2">
+                  <ul className="list-disc list-inside space-y-[var(--space-item)] text-[var(--foreground)] ml-2">
                     {exp.description.map((desc, i) => (
                       <li key={i} className="leading-relaxed">{desc}</li>
                     ))}
                   </ul>
                 )}
                 {exp.technologies.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2">
+                  <div className="mt-[var(--space-item)] flex flex-wrap gap-2">
                     {exp.technologies.map((tech, i) => (
                       <span key={i} className="px-2 py-0.5 text-xs rounded" 
-                            style={{ backgroundColor: `${colors.accent}20`, color: colors.accent, border: `1px solid ${colors.accent}40` }}>
+                            style={{ backgroundColor: `${colors.accent}20`, color: colors.accent, border: `1px solid ${colors.accent}40`, borderRadius: 'var(--radius-card)' }}>
                         {tech}
                       </span>
                     ))}
@@ -191,14 +207,14 @@ export function TechModern({ data, colors }: TechModernProps) {
 
       {/* Projects - Important for tech */}
       {projects.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-lg font-bold mb-4 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="projects">
+          <h2 style={headingStyle2}>
             Projects
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-[var(--space-entry)]">
             {projects.map((project) => (
-              <div key={project.id} className="p-4 rounded-lg border" style={{ borderColor: `${colors.primary}30`, backgroundColor: `${colors.primary}05` }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-2">
+              <div key={project.id} className="p-4 border" style={{ ...entryStyle, borderColor: `${colors.primary}30`, backgroundColor: `${colors.primary}05`, borderRadius: 'var(--radius-card)' }}>
+                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-[var(--space-tight)]">
                   <h3 className="font-bold" style={{ color: colors.heading }}>{project.name}</h3>
                   <div className="flex gap-2">
                     {project.url && (
@@ -213,19 +229,19 @@ export function TechModern({ data, colors }: TechModernProps) {
                     )}
                   </div>
                 </div>
-                <p className="text-[var(--foreground)] mb-3">{project.description}</p>
+                <p className="text-[var(--foreground)] mb-[var(--space-item)]">{project.description}</p>
                 {project.technologies.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-2">
+                  <div className="flex flex-wrap gap-2 mb-[var(--space-item)]">
                     {project.technologies.map((tech, i) => (
                       <span key={i} className="px-2 py-0.5 text-xs rounded" 
-                            style={{ backgroundColor: `${colors.secondary}20`, color: colors.secondary, border: `1px solid ${colors.secondary}40` }}>
+                            style={{ backgroundColor: `${colors.secondary}20`, color: colors.secondary, border: `1px solid ${colors.secondary}40`, borderRadius: 'var(--radius-card)' }}>
                         {tech}
                       </span>
                     ))}
                   </div>
                 )}
                 {project.highlights.length > 0 && (
-                  <ul className="list-disc list-inside space-y-1 text-sm text-[var(--foreground)] ml-2">
+                  <ul className="list-disc list-inside space-y-[var(--space-item)] text-sm text-[var(--foreground)] ml-2">
                     {project.highlights.map((highlight, i) => (
                       <li key={i}>{highlight}</li>
                     ))}
@@ -239,13 +255,13 @@ export function TechModern({ data, colors }: TechModernProps) {
 
       {/* Education */}
       {education.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-lg font-bold mb-3 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="education">
+          <h2 style={headingStyle2}>
             Education
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-[var(--space-item)]">
             {education.map((edu) => (
-              <div key={edu.id} className="p-3 rounded-lg border" style={{ borderColor: `${colors.primary}20` }}>
+              <div key={edu.id} className="p-3 border" style={{ ...entryStyle, borderColor: `${colors.primary}20`, borderRadius: 'var(--radius-card)' }}>
                 <div className="flex flex-col md:flex-row md:justify-between gap-2">
                   <div>
                     <p className="font-bold" style={{ color: colors.heading }}>
@@ -269,29 +285,30 @@ export function TechModern({ data, colors }: TechModernProps) {
 
       {/* Languages */}
       {languages.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-lg font-bold mb-3 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="languages">
+          <h2 style={headingStyle2}>
             Languages
           </h2>
           <div className="flex flex-wrap gap-2">
             {languages.map((language) => (
               <div
                 key={language.id}
-                className="!inline-flex !items-center !px-3 !py-1.5 !text-sm !rounded-full !border !bg-cyan-50 !text-slate-900 !border-cyan-300"
+                className="inline-flex items-center px-3 py-1.5 text-sm rounded-full border"
                 style={{
-                  backgroundColor: '#ecfeff',
-                  color: '#0f172a',
-                  borderColor: '#67e8f9',
+                  backgroundColor: `${colors.primary}15`,
+                  color: colors.primary,
+                  borderColor: `${colors.primary}30`,
+                  borderRadius: 'var(--radius-card)',
                 }}
               >
-                <span className="!text-slate-900" style={{ color: '#0f172a' }}>
+                <span style={{ color: colors.primary }}>
                   {language.name}
                 </span>
 
                 {language.proficiency && (
                   <span
-                    className="!ml-1.5 !text-xs !text-cyan-900"
-                    style={{ color: '#164e63' }}
+                    className="ml-1.5 text-xs"
+                    style={{ color: colors.secondary }}
                   >
                     ({language.proficiency})
                   </span>
@@ -304,14 +321,14 @@ export function TechModern({ data, colors }: TechModernProps) {
 
       {/* Certifications */}
       {certifications.length > 0 && (
-        <section className="mb-8">
-          <h2 className="text-lg font-bold mb-3 pb-1 border-b-2" style={headingStyle}>
+        <section style={sectionStyle} data-section="certifications">
+          <h2 style={headingStyle2}>
             Certifications
           </h2>
-          <div className="space-y-2">
+          <div className="space-y-[var(--space-tight)]">
             {certifications.map((cert) => (
               <div key={cert.id} className="flex flex-col md:flex-row md:items-center md:justify-between p-3 rounded-lg border" 
-                   style={{ borderColor: `${colors.primary}30` }}>
+                   style={{ borderColor: `${colors.primary}30`, borderRadius: 'var(--radius-card)' }}>
                 <div>
                   <p className="font-bold" style={{ color: colors.heading }}>{cert.name}</p>
                   <p className="text-sm text-[var(--muted-foreground)]">{cert.issuer} • {formatDate(cert.date)}</p>
@@ -329,13 +346,13 @@ export function TechModern({ data, colors }: TechModernProps) {
 
       {/* Custom Sections */}
       {custom_sections.map((section) => (
-        <section key={section.id} className="mb-8">
-          <h2 className="text-lg font-bold mb-3 pb-1 border-b-2" style={headingStyle}>
+        <section key={section.id} style={sectionStyle} data-section={`custom-${section.id}`}>
+          <h2 style={headingStyle2}>
             {section.title.toUpperCase()}
           </h2>
-          <div className="space-y-3">
+          <div className="space-y-[var(--space-item)]">
             {section.items.map((item) => (
-              <div key={item.id} className="p-3 rounded-lg border" style={{ borderColor: `${colors.secondary}30` }}>
+              <div key={item.id} className="p-3 rounded-lg border" style={{ borderColor: `${colors.secondary}30`, borderRadius: 'var(--radius-card)' }}>
                 <h3 className="font-bold" style={{ color: colors.heading }}>{item.title}</h3>
                 {item.subtitle && <p className="text-sm" style={{ color: colors.accent }}>{item.subtitle}</p>}
                 {item.date && <p className="text-sm text-[var(--muted-foreground)]">{item.date}</p>}

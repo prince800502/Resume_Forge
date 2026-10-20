@@ -299,8 +299,10 @@ export async function exportResumeToDocx(
       border: templateConfig.headingStyle.borderBottom ? {
         bottom: { color: primaryColor.hex, style: BorderStyle.SINGLE, size: 6 },
       } : undefined,
-      keepNext: true,
-      keepLines: true,
+      // Only keepNext on non-sidebar headings to prevent stranded headings
+      // keepLines can cause issues with long headings
+      keepNext: !isSidebar,
+      keepLines: false,
     }, target);
   };
 
@@ -342,10 +344,13 @@ export async function exportResumeToDocx(
     const bulletChar = templateConfig.bulletStyle === 'dash' ? '–' : 
                        templateConfig.bulletStyle === 'arrow' ? '▸' : '•';
     
+    // Clean text: remove leading bullet characters (*, -, •, etc.) that may come from source data
+    const cleanText = text.replace(/^[\s*\-•]+/, '').trim();
+    
     addParagraph({
       children: [
         new TextRun({
-          text: `${bulletChar} ${text}`,
+          text: `${bulletChar} ${cleanText}`,
           size: isSidebar ? FONT_SIZES.small : FONT_SIZES.body,
           color: getTextColor().hex,
           font: fontFamilyFull,
@@ -574,7 +579,7 @@ export async function exportResumeToDocx(
         addParagraph({
           children: posRuns,
           spacing: { before: expIndex === 0 ? SPACING.xl : SPACING.xxl, after: SPACING.xs },
-          keepNext: true,
+          // Don't keepNext on individual entries - allow natural page breaks
         }, target);
 
         // Location and Dates
@@ -651,7 +656,7 @@ export async function exportResumeToDocx(
         addParagraph({
           children: eduRuns,
           spacing: { before: eduIndex === 0 ? SPACING.xl : SPACING.xxl, after: SPACING.xs },
-          keepNext: true,
+          // Don't keepNext on individual entries - allow natural page breaks
         }, target);
 
         // Meta info
@@ -731,7 +736,7 @@ export async function exportResumeToDocx(
             }),
           ],
           spacing: { before: projIndex === 0 ? SPACING.xl : SPACING.xxl, after: SPACING.xs },
-          keepNext: true,
+          // Don't keepNext on individual entries - allow natural page breaks
         }, target);
 
         // Description
@@ -799,7 +804,7 @@ export async function exportResumeToDocx(
             }),
           ],
           spacing: { before: certIndex === 0 ? SPACING.xl : SPACING.xl, after: SPACING.xs },
-          keepNext: true,
+          // Don't keepNext on individual entries - allow natural page breaks
         }, target);
 
         // Meta

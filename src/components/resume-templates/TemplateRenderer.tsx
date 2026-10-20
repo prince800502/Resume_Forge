@@ -7,6 +7,9 @@ import { MinimalEssentials } from './templates/MinimalEssentials'
 import { CreativePortfolio } from './templates/CreativePortfolio'
 import { ExecutiveLeadership } from './templates/ExecutiveLeadership'
 
+// Content width inside margins (A4 210mm - 18mm left - 18mm right = 174mm)
+const CONTENT_WIDTH_MM = 174
+
 export interface TemplateRendererProps {
   data: ResumeData
   templateId: string
@@ -60,11 +63,13 @@ export function TemplateRenderer({ data, templateId, colors, isFullPreview = fal
   } as React.CSSProperties
 
   const isSplitMode = !isFullPreview
+  // In export mode, use content width (inside margins) to match export container
+  const previewWidth = isExport ? `${CONTENT_WIDTH_MM}mm` : (isFullPreview ? '100%' : '210mm')
   const previewStyle: React.CSSProperties = {
     ...resumeVariables,
-    minWidth: isFullPreview ? '100%' : '210mm',
-    maxWidth: isFullPreview ? '210mm' : '210mm',
-    width: isFullPreview ? '100%' : '210mm',
+    minWidth: previewWidth,
+    maxWidth: previewWidth,
+    width: previewWidth,
     transformOrigin: 'top center',
   }
 

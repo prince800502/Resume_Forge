@@ -170,7 +170,13 @@ export function TechModern({ data, colors, isExport = false }: TechModernProps) 
           <div className="space-y-[var(--space-entry)]">
             {experience.map((exp) => (
               <div key={exp.id} className="relative pl-6 border-l-2" style={{ ...entryStyle, borderColor: colors.primary }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-[var(--space-tight)]">
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                  marginBottom: 'var(--space-tight)',
+                }}>
                   <div>
                     <h3 className="font-bold" style={{ color: colors.heading }}>{exp.position}</h3>
                     <p className="font-medium" style={{ color: colors.accent }}>{exp.company}</p>
@@ -214,7 +220,13 @@ export function TechModern({ data, colors, isExport = false }: TechModernProps) 
           <div className="space-y-[var(--space-entry)]">
             {projects.map((project) => (
               <div key={project.id} className="p-4 border" style={{ ...entryStyle, borderColor: `${colors.primary}30`, backgroundColor: `${colors.primary}05`, borderRadius: 'var(--radius-card)' }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-[var(--space-tight)]">
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                  marginBottom: 'var(--space-tight)',
+                }}>
                   <h3 className="font-bold" style={{ color: colors.heading }}>{project.name}</h3>
                   <div className="flex gap-2">
                     {project.url && (
@@ -262,7 +274,12 @@ export function TechModern({ data, colors, isExport = false }: TechModernProps) 
           <div className="space-y-[var(--space-item)]">
             {education.map((edu) => (
               <div key={edu.id} className="p-3 border" style={{ ...entryStyle, borderColor: `${colors.primary}20`, borderRadius: 'var(--radius-card)' }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2">
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                }}>
                   <div>
                     <p className="font-bold" style={{ color: colors.heading }}>
                       {edu.degree}{edu.field && ` in ${edu.field}`}

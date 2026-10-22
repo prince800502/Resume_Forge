@@ -7,6 +7,7 @@ import { DashboardPage } from '@/pages/DashboardPage'
 import { ResumeBuilderPage } from '@/pages/ResumeBuilderPage'
 import { ATSCheckerPage } from '@/pages/ATSCheckerPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { ExportTestPage } from '@/pages/ExportTestPage'
 import { useAuth } from '@/contexts/AuthContext'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -101,6 +102,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/export-test"
+        element={
+          <ProtectedRoute>
+            <ExportTestPage />
           </ProtectedRoute>
         }
       />

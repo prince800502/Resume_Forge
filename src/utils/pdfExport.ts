@@ -6,6 +6,7 @@ import {
   renderResumeToContainer,
   waitForExportReady,
   cleanupExportContainer,
+  captureResumeForExport,
   getSafeFileName,
   A4_WIDTH_MM,
   A4_HEIGHT_MM,
@@ -36,20 +37,95 @@ export async function exportResumeToPdf(
     throw new Error('Colors are required for PDF export');
   }
 
+  console.log('[PDF EXPORT DEBUG] Starting export for template:', templateId);
+  console.log('[PDF EXPORT DEBUG] Content width constants:', { CONTENT_WIDTH_MM, CONTENT_WIDTH_PX, CONTENT_HEIGHT_PX });
+
   // Create export container and render resume
   const { container, contentDiv, root } = createExportContainer(colors);
   
+  console.log('[PDF EXPORT DEBUG] Container created:', { 
+    containerWidth: container.style.width,
+    contentDivWidth: contentDiv.style.width,
+    contentDivMinHeight: contentDiv.style.minHeight
+  });
+
   try {
     renderResumeToContainer(root, resumeData, templateId, colors);
+    console.log('[PDF EXPORT DEBUG] Template rendered to container');
+    
     document.body.appendChild(container);
 
     // Wait for rendering to complete
     options.onProgress?.('Preparing resume...', 10);
     await waitForExportReady(contentDiv);
 
+    // INSPECT SOURCE DOM BEFORE CAPTURE
+    const sourceResumePreview = contentDiv.querySelector('.resume-preview') as HTMLElement | null;
+    if (sourceResumePreview) {
+      const rect = sourceResumePreview.getBoundingClientRect();
+      const computedStyle = window.getComputedStyle(sourceResumePreview);
+      console.log('[PDF EXPORT DEBUG] SOURCE .resume-preview:', {
+        width: rect.width,
+        height: rect.height,
+        display: computedStyle.display,
+        gridTemplateColumns: computedStyle.gridTemplateColumns,
+        widthStyle: sourceResumePreview.style.width
+      });
+      
+      // Check main grid
+      const mainGrid = sourceResumePreview.querySelector('[data-template="classic-executive"] > div.grid') as HTMLElement | null;
+      if (mainGrid) {
+        const gridRect = mainGrid.getBoundingClientRect();
+        const gridStyle = window.getComputedStyle(mainGrid);
+        console.log('[PDF EXPORT DEBUG] SOURCE main grid:', {
+          width: gridRect.width,
+          height: gridRect.height,
+          display: gridStyle.display,
+          gridTemplateColumns: gridStyle.gridTemplateColumns,
+          className: mainGrid.className
+        });
+      }
+      
+      // Check sidebar
+      const sidebar = sourceResumePreview.querySelector('aside') as HTMLElement | null;
+      if (sidebar) {
+        const sideRect = sidebar.getBoundingClientRect();
+        const sideStyle = window.getComputedStyle(sidebar);
+        console.log('[PDF EXPORT DEBUG] SOURCE sidebar:', {
+          width: sideRect.width,
+          height: sideRect.height,
+          display: sideStyle.display,
+          borderLeftWidth: sideStyle.borderLeftWidth,
+          paddingLeft: sideStyle.paddingLeft,
+          className: sidebar.className
+        });
+      } else {
+        console.log('[PDF EXPORT DEBUG] SOURCE sidebar: NOT FOUND');
+      }
+      
+      // Check experience date row
+      const expRow = sourceResumePreview.querySelector('[data-section="experience"] .flex') as HTMLElement | null;
+      if (expRow) {
+        const rowStyle = window.getComputedStyle(expRow);
+        console.log('[PDF EXPORT DEBUG] SOURCE experience row:', {
+          display: rowStyle.display,
+          flexDirection: rowStyle.flexDirection,
+          justifyContent: rowStyle.justifyContent,
+          className: expRow.className
+        });
+      }
+    }
+
     // Capture the entire resume at high resolution once
     options.onProgress?.('Rendering high-resolution image...', 30);
     const { canvas, contentHeightPx, contentWidthPx } = await captureResumeForExport(contentDiv, colors);
+
+    console.log('[PDF EXPORT DEBUG] Canvas captured:', { 
+      canvasWidth: canvas.width, 
+      canvasHeight: canvas.height,
+      contentWidthPx,
+      contentHeightPx
+    });
 
     options.onProgress?.('Generating PDF...', 60);
 
@@ -138,118 +214,6 @@ export async function exportResumeToPdf(
   } finally {
     cleanupExportContainer(container, root);
   }
-}
-
-/**
- * Captures the resume content at high resolution for print-quality output.
- * Returns the canvas and the actual content height in CSS pixels.
- */
-async function captureResumeForExport(
-  contentDiv: HTMLDivElement,
-  colors: ExportColors
-): Promise<{ canvas: HTMLCanvasElement; contentHeightPx: number; contentWidthPx: number }> {
-  // Find the .resume-preview element rendered by TemplateRenderer
-  const resumePreview = contentDiv.querySelector('.resume-preview') as HTMLElement | null;
-  
-  if (!resumePreview) {
-    throw new Error('Resume preview element not found in export content');
-  }
-
-  const rect = resumePreview.getBoundingClientRect();
-  
-  if (rect.width <= 0 || rect.height <= 0) {
-    throw new Error('Resume preview has no visible dimensions');
-  }
-
-  // The resumePreview should be exactly CONTENT_WIDTH_PX wide
-  // but may be taller (multi-page content)
-  const contentWidthPx = Math.ceil(rect.width);
-  const contentHeightPx = Math.ceil(rect.height);
-
-  // Capture at high resolution for print quality
-  const captureOptions = {
-    scale: CAPTURE_SCALE,
-    useCORS: true,
-    allowTaint: false,
-    logging: false,
-    backgroundColor: colors.background,
-    imageTimeout: 15000,
-    width: contentWidthPx,
-    height: contentHeightPx,
-    windowWidth: contentWidthPx,
-    windowHeight: contentHeightPx,
-    scrollX: 0,
-    scrollY: 0,
-    onclone: (clonedDocument: Document) => {
-      const clonedContent = clonedDocument.getElementById('resume-export-content');
-      if (!clonedContent) return;
-      
-      const clonedResume = clonedContent.querySelector('.resume-preview') as HTMLElement | null;
-      if (!clonedResume) return;
-
-      // Ensure CSS variables are set correctly in the cloned document
-      Object.entries({
-        '--foreground': colors.text,
-        '--muted-foreground': colors.secondary,
-        '--background': colors.background,
-        '--card': colors.background,
-        '--primary': colors.primary,
-        '--accent': colors.accent,
-        '--heading': colors.heading,
-      }).forEach(([key, value]) => {
-        clonedResume.style.setProperty(key, value, 'important');
-      });
-
-      clonedResume.style.backgroundColor = colors.background;
-      clonedResume.style.color = colors.text;
-      clonedResume.style.transform = 'none';
-      clonedResume.style.opacity = '1';
-      clonedResume.style.visibility = 'visible';
-      clonedResume.style.position = 'relative';
-      clonedResume.style.left = '0';
-      clonedResume.style.top = '0';
-      clonedResume.style.width = `${contentWidthPx}px`;
-
-      const inner = clonedResume.firstElementChild as HTMLElement | null;
-      if (inner) {
-        inner.style.backgroundColor = colors.background;
-        inner.style.color = colors.text;
-        inner.style.transform = 'none';
-        inner.style.opacity = '1';
-        inner.style.visibility = 'visible';
-      }
-    },
-  };
-
-  let canvas = await html2canvas(resumePreview, captureOptions);
-
-  // Diagnostic logging
-  console.log('[PDF Export] Canvas captured:', {
-    width: canvas.width,
-    height: canvas.height,
-    contentWidthPx,
-    contentHeightPx,
-    scale: CAPTURE_SCALE,
-  });
-
-  // Retry with foreignObjectRendering if blank
-  if (canvas.width === 0 || canvas.height === 0) {
-    console.log('[PDF Export] First capture blank, retrying with foreignObjectRendering...');
-    canvas = await html2canvas(resumePreview, {
-      ...captureOptions,
-      foreignObjectRendering: true,
-    });
-    console.log('[PDF Export] Retry canvas:', {
-      width: canvas.width,
-      height: canvas.height,
-    });
-  }
-
-  if (canvas.width === 0 || canvas.height === 0) {
-    throw new Error('The resume could not be rendered for export - canvas is blank');
-  }
-
-  return { canvas, contentHeightPx, contentWidthPx };
 }
 
 /**

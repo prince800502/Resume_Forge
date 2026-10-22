@@ -75,12 +75,13 @@ export function createExportContainer(colors: ExportColors): {
   root: ReturnType<typeof createRoot>;
 } {
   // Outer container - positioned off-screen but visible
+  // Use CONTENT_WIDTH_PX to match TemplateRenderer's consistent 174mm width
   const container = document.createElement('div');
   container.className = 'resume-export-container';
   container.style.position = 'absolute';
   container.style.left = '-9999px';
   container.style.top = '0';
-  container.style.width = `${A4_WIDTH_PX}px`; // Full A4 width in CSS px
+  container.style.width = `${CONTENT_WIDTH_PX}px`; // Match TemplateRenderer's 174mm content width
   container.style.height = 'auto';
   container.style.pointerEvents = 'none';
   container.style.zIndex = '0';
@@ -104,14 +105,13 @@ export function createExportContainer(colors: ExportColors): {
   });
 
   // Inner content div - this is what TemplateRenderer renders into
-  // IMPORTANT: This div represents the PRINTABLE CONTENT AREA (inside margins)
+  // TemplateRenderer will render at 174mm width (CONTENT_WIDTH_PX)
   const contentDiv = document.createElement('div');
   contentDiv.id = 'resume-export-content';
-  contentDiv.style.width = `${CONTENT_WIDTH_PX}px`; // Exact content width
+  contentDiv.style.width = '100%'; // Full width of container
   contentDiv.style.minHeight = `${CONTENT_HEIGHT_PX}px`; // At least one page
   contentDiv.style.boxSizing = 'border-box';
-  contentDiv.style.padding = '0'; // No extra padding - TemplateRenderer handles it
-  contentDiv.style.margin = '0 auto'; // Center horizontally
+  contentDiv.style.padding = '0';
 
   container.appendChild(contentDiv);
 
@@ -207,6 +207,140 @@ export function isCanvasBlank(canvas: HTMLCanvasElement): boolean {
 }
 
 /**
+ * Forces correct layout styles on the source DOM before capture.
+ * This ensures the source DOM has the correct layout (as if viewport = container width),
+ * since Tailwind responsive classes are viewport-based, not container-based.
+ */
+function forceCorrectLayoutStyles(sourceRoot: HTMLElement): void {
+  const layoutSelectors = [
+    // Main grid containers
+    { selector: '[data-template="classic-executive"] > div.grid', description: 'Main grid' },
+    { selector: '.classic-executive-template > div.grid', description: 'Main grid (alt)' },
+    // Sidebar
+    { selector: 'aside', description: 'Sidebar' },
+    // Experience/education title/date rows
+    { selector: '[data-section="experience"] .flex', description: 'Experience flex rows' },
+    { selector: '[data-section="education"] .flex', description: 'Education flex rows' },
+    { selector: '[data-section="certifications"] .flex', description: 'Certifications flex rows' },
+    // Skills grid
+    { selector: '[data-section="skills"] .grid', description: 'Skills grid' },
+  ];
+
+  for (const { selector } of layoutSelectors) {
+    try {
+      const elements = sourceRoot.querySelectorAll(selector);
+      
+      for (const el of elements) {
+        const htmlEl = el as HTMLElement;
+        if (!htmlEl) continue;
+        
+        // Force critical layout properties that should apply at container width (658px = sm: breakpoint)
+        const style = htmlEl.style;
+        
+        // For grid containers: force grid display and columns
+        if (selector.includes('.grid')) {
+          style.setProperty('display', 'grid', 'important');
+          style.setProperty('grid-template-columns', 'minmax(0, 1.7fr) minmax(190px, 0.85fr)', 'important');
+          style.setProperty('column-gap', '2rem', 'important'); // gap-x-8
+        }
+        
+        // For sidebar: force border and padding
+        if (selector === 'aside') {
+          style.setProperty('border-left-width', '1px', 'important');
+          style.setProperty('border-left-style', 'solid', 'important');
+          style.setProperty('padding-left', '1.5rem', 'important'); // pl-6
+        }
+        
+        // For flex rows (experience/education/certifications): force row direction
+        if (selector.includes('.flex')) {
+          style.setProperty('display', 'flex', 'important');
+          style.setProperty('flex-direction', 'row', 'important');
+          style.setProperty('justify-content', 'space-between', 'important');
+        }
+      }
+    } catch (e) {
+      // Ignore selector errors
+    }
+  }
+}
+
+/**
+ * Applies computed layout styles to key elements in the cloned document.
+ * This preserves layout from Tailwind responsive classes that don't work in the cloned document.
+ */
+function applyComputedLayoutStyles(
+  sourceRoot: HTMLElement,
+  clonedRoot: HTMLElement
+): void {
+  // First, force correct styles on source (so they're captured correctly)
+  forceCorrectLayoutStyles(sourceRoot);
+  
+  const layoutSelectors = [
+    // Main grid containers
+    { selector: '[data-template="classic-executive"] > div.grid', description: 'Main grid' },
+    { selector: '.classic-executive-template > div.grid', description: 'Main grid (alt)' },
+    // Sidebar
+    { selector: 'aside', description: 'Sidebar' },
+    // Experience/education title/date rows
+    { selector: '[data-section="experience"] .flex', description: 'Experience flex rows' },
+    { selector: '[data-section="education"] .flex', description: 'Education flex rows' },
+    { selector: '[data-section="certifications"] .flex', description: 'Certifications flex rows' },
+    // Skills grid
+    { selector: '[data-section="skills"] .grid', description: 'Skills grid' },
+  ];
+
+  for (const { selector } of layoutSelectors) {
+    try {
+      const sourceElements = sourceRoot.querySelectorAll(selector);
+      const clonedElements = clonedRoot.querySelectorAll(selector);
+      
+      if (sourceElements.length === 0) continue;
+      
+      for (let i = 0; i < sourceElements.length && i < clonedElements.length; i++) {
+        const sourceEl = sourceElements[i] as HTMLElement;
+        const clonedEl = clonedElements[i] as HTMLElement;
+        
+        if (!sourceEl || !clonedEl) continue;
+        
+        const computedStyle = window.getComputedStyle(sourceEl);
+        
+        // Copy critical layout properties
+        const criticalProps = [
+          'display',
+          'gridTemplateColumns',
+          'gridTemplateRows',
+          'flexDirection',
+          'flexWrap',
+          'justifyContent',
+          'alignItems',
+          'width',
+          'minWidth',
+          'maxWidth',
+          'paddingLeft',
+          'paddingRight',
+          'borderLeftWidth',
+          'borderLeftStyle',
+          'borderLeftColor',
+        ];
+        
+        criticalProps.forEach(prop => {
+          const value = computedStyle.getPropertyValue(prop);
+          if (value && value !== 'initial' && value !== 'normal' && value !== 'none' && value !== '0px') {
+            try {
+              clonedEl.style.setProperty(prop, value, 'important');
+            } catch (e) {
+              // Ignore
+            }
+          }
+        });
+      }
+    } catch (e) {
+      // Ignore selector errors
+    }
+  }
+}
+
+/**
  * Captures the resume content at high resolution for print-quality output.
  * Returns the canvas and the actual content height in CSS pixels.
  */
@@ -231,6 +365,11 @@ export async function captureResumeForExport(
   // but may be taller (multi-page content)
   const contentWidthPx = Math.ceil(rect.width);
   const contentHeightPx = Math.ceil(rect.height);
+
+  // FORCE CORRECT LAYOUT on source DOM before capture
+  // This ensures the source DOM has correct layout (sm: breakpoint styles)
+  // since Tailwind responsive classes are viewport-based, not container-based
+  forceCorrectLayoutStyles(resumePreview);
 
   // Capture at high resolution for print quality
   const captureOptions = {
@@ -283,6 +422,34 @@ export async function captureResumeForExport(
         inner.style.transform = 'none';
         inner.style.opacity = '1';
         inner.style.visibility = 'visible';
+      }
+
+      // TARGETED: Apply computed styles to key layout elements that depend on responsive breakpoints
+      // This is more reliable than generic element-by-index copying
+      applyComputedLayoutStyles(resumePreview, clonedResume);
+
+      // INSPECT CLONED DOM AFTER STYLES APPLIED
+      const clonedMainGrid = clonedResume.querySelector('[data-template="classic-executive"] > div.grid') as HTMLElement | null;
+      if (clonedMainGrid) {
+        const gridStyle = clonedDocument.defaultView?.getComputedStyle(clonedMainGrid);
+        console.log('[EXPORT DEBUG] CLONED main grid:', {
+          display: gridStyle?.display,
+          gridTemplateColumns: gridStyle?.gridTemplateColumns,
+          className: clonedMainGrid.className
+        });
+      }
+      
+      const clonedSidebar = clonedResume.querySelector('aside') as HTMLElement | null;
+      if (clonedSidebar) {
+        const sideStyle = clonedDocument.defaultView?.getComputedStyle(clonedSidebar);
+        console.log('[EXPORT DEBUG] CLONED sidebar:', {
+          display: sideStyle?.display,
+          borderLeftWidth: sideStyle?.borderLeftWidth,
+          paddingLeft: sideStyle?.paddingLeft,
+          className: clonedSidebar.className
+        });
+      } else {
+        console.log('[EXPORT DEBUG] CLONED sidebar: NOT FOUND');
       }
     },
   };

@@ -104,7 +104,10 @@ export function ExecutiveLeadership({ data, colors, isExport = false }: Executiv
           <h2 style={headingStyle2}>
             Core Competencies
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid" style={{
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: '1rem',
+          }}>
             {['technical', 'framework', 'database', 'cloud', 'tool', 'language', 'soft', 'other'].map(category => {
               const categorySkills = skills.filter(s => s.category === category)
               if (categorySkills.length === 0) return null
@@ -137,7 +140,13 @@ export function ExecutiveLeadership({ data, colors, isExport = false }: Executiv
           <div className="space-y-[var(--space-entry)]">
             {experience.map((exp) => (
               <div key={exp.id} className="border-l-4 pl-6" style={{ ...entryStyle, borderColor: colors.primary }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-4 mb-[var(--space-item)]">
+                <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            marginBottom: 'var(--space-item)',
+          }}>
                   <div>
                     <h3 className="text-xl font-bold mb-1" style={headingStyle}>{exp.position}</h3>
                     <p className="text-lg font-medium" style={{ color: colors.accent }}>{exp.company}</p>
@@ -177,7 +186,12 @@ export function ExecutiveLeadership({ data, colors, isExport = false }: Executiv
           <div className="space-y-[var(--space-entry)]">
             {education.map((edu) => (
               <div key={edu.id} className="p-4 border" style={{ ...entryStyle, borderColor: `${colors.primary}20`, borderRadius: 'var(--radius-card)' }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-4">
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                }}>
                   <div>
                     <p className="font-bold text-lg mb-1" style={headingStyle}>
                       {edu.degree}{edu.field && ` in ${edu.field}`}

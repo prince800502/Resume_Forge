@@ -9,6 +9,7 @@ import { ExecutiveLeadership } from './templates/ExecutiveLeadership'
 
 // Content width inside margins (A4 210mm - 18mm left - 18mm right = 174mm)
 const CONTENT_WIDTH_MM = 174
+const A4_WIDTH_MM = 210
 
 export interface TemplateRendererProps {
   data: ResumeData
@@ -62,9 +63,10 @@ export function TemplateRenderer({ data, templateId, colors, isFullPreview = fal
     '--border-width': isExport ? '1px' : '1px',
   } as React.CSSProperties
 
-  const isSplitMode = !isFullPreview
-  // In export mode, use content width (inside margins) to match export container
-  const previewWidth = isExport ? `${CONTENT_WIDTH_MM}mm` : (isFullPreview ? '100%' : '210mm')
+  // CONSISTENT WIDTH: Always use content width (174mm) for both preview and export
+  // This ensures visual consistency between preview and exported output
+  // The ResumePreview wrapper handles showing page margins for full preview mode
+  const previewWidth = `${CONTENT_WIDTH_MM}mm`
   const previewStyle: React.CSSProperties = {
     ...resumeVariables,
     minWidth: previewWidth,
@@ -77,7 +79,7 @@ export function TemplateRenderer({ data, templateId, colors, isFullPreview = fal
     backgroundColor: colors.background,
     color: colors.text,
     minHeight: isFullPreview ? 'auto' : '297mm',
-    padding: isExport ? '0' : isFullPreview ? '2.5rem' : '2rem 3rem',
+    padding: isExport ? '0' : '0', // No extra padding - templates handle their own spacing
     width: '100%',
     boxSizing: 'border-box',
   }

@@ -66,7 +66,13 @@ export function ModernProfessional({ data, colors, isExport = false }: ModernPro
     <div className="modern-professional-template" style={style} data-template="modern-professional">
       {/* Header */}
       <header className="mb-[var(--space-section)] pb-[var(--space-heading)] border-b-2" style={{ borderColor: colors.primary }}>
-        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: '1rem',
+        }}>
           <div>
             <h1 className="text-3xl md:text-4xl font-bold mb-2" style={headingStyle}>
               {personal.firstName} {personal.lastName}
@@ -120,7 +126,13 @@ export function ModernProfessional({ data, colors, isExport = false }: ModernPro
           <div className="space-y-[var(--space-entry)]">
             {experience.map((exp, index) => (
               <div key={exp.id} className="pl-4 border-l-2" style={{ ...entryStyle, borderColor: colors.primary }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-[var(--space-tight)]">
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                  marginBottom: 'var(--space-tight)',
+                }}>
                   <div>
                     <h3 className="text-lg font-semibold" style={{ color: colors.heading }}>{exp.position}</h3>
                     <p className="text-[var(--foreground)]" style={{ color: colors.accent }}>{exp.company}</p>
@@ -164,7 +176,12 @@ export function ModernProfessional({ data, colors, isExport = false }: ModernPro
           <div className="space-y-[var(--space-entry)]">
             {education.map((edu) => (
               <div key={edu.id} className="pl-4 border-l-2" style={{ ...entryStyle, borderColor: colors.secondary }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2">
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                }}>
                   <div>
                     <h3 className="font-semibold" style={{ color: colors.heading }}>{edu.degree} in {edu.field}</h3>
                     <p className="text-[var(--foreground)]">{edu.institution}</p>
@@ -269,8 +286,17 @@ export function ModernProfessional({ data, colors, isExport = false }: ModernPro
           </h2>
           <div className="space-y-[var(--space-item)]">
             {certifications.map((cert) => (
-              <div key={cert.id} className="flex flex-col md:flex-row md:items-center md:justify-between p-3 rounded-lg border" 
-                   style={{ borderColor: colors.primary, borderRadius: 'var(--radius-card)' }}>
+              <div key={cert.id} style={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '1rem',
+                padding: '0.75rem',
+                borderRadius: 'var(--radius-card)',
+                border: '1px solid',
+                borderColor: colors.primary,
+              }}>
                 <div>
                   <h3 className="font-semibold" style={{ color: colors.heading }}>{cert.name}</h3>
                   <p className="text-sm text-[var(--muted-foreground)]">{cert.issuer}</p>

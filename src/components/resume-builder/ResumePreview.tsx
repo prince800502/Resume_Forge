@@ -26,7 +26,7 @@ export function ResumePreview({
   isFullPreview = false
 }: ResumePreviewProps) {
   return (
-    <div className={clsx('resume-preview-container relative', className, isFullPreview && 'w-full max-w-[210mm] mx-auto')}>
+    <div className={clsx('resume-preview-container relative', className)}>
       {/* Template indicator - hide in full preview */}
       {!isFullPreview && (
         <div className="absolute top-2 right-2 z-10">
@@ -36,19 +36,24 @@ export function ResumePreview({
         </div>
       )}
       
-      {/* Preview frame */}
+      {/* Preview frame - Always show page with margins in full preview mode */}
       <div className={clsx(
         'relative shadow-2xl rounded-xl overflow-hidden',
         isFullPreview ? 'mx-auto' : ''
       )} 
            style={{ 
-             boxShadow: isFullPreview ? '0 25px 50px -12px rgba(0, 0, 0, 0.25)' : '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-             maxWidth: isFullPreview ? '210mm' : undefined
+             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+             maxWidth: isFullPreview ? '210mm' : '174mm', // Show page with margins in full preview, content width in split
+             margin: isFullPreview ? '0 auto' : undefined,
+             backgroundColor: colors.background, // Page background
+             padding: isFullPreview ? '20mm 18mm' : 0, // A4 margins in full preview mode
            }}>
         <TemplateRenderer 
           data={data} 
           templateId={templateId} 
           colors={colors} 
+          isFullPreview={isFullPreview}
+          isExport={false}
         />
       </div>
       

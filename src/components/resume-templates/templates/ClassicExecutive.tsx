@@ -99,8 +99,15 @@ export function ClassicExecutive({ data, colors, isExport = false }: ClassicExec
         </section>
       )}
 
-      {/* Main resume content */}
-      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.7fr)_minmax(190px,0.85fr)] gap-x-8 items-start">
+      {/* Main resume content - Use explicit inline grid layout that works at fixed content width (174mm/658px)
+          regardless of viewport. This ensures the two-column layout with sidebar renders correctly
+          in both preview (210mm viewport) and export (658px off-screen container). */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'minmax(0, 1.7fr) minmax(190px, 0.85fr)',
+        columnGap: '2rem', /* gap-x-8 = 2rem */
+        alignItems: 'start',
+      }}>
         <div className="min-w-0">
 
       {/* Professional Experience */}
@@ -112,7 +119,13 @@ export function ClassicExecutive({ data, colors, isExport = false }: ClassicExec
           <div className="space-y-[var(--space-entry)]">
             {experience.map((exp) => (
               <div key={exp.id} style={entryStyle}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-[var(--space-tight)]">
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                  marginBottom: 'var(--space-tight)',
+                }}>
                   <div>
                     <h3 className="font-bold" style={{ color: colors.heading }}>{exp.position}</h3>
                     <p className="font-normal" style={{ color: colors.accent }}>{exp.company}</p>
@@ -152,7 +165,12 @@ export function ClassicExecutive({ data, colors, isExport = false }: ClassicExec
           <div className="space-y-[var(--space-entry)]">
             {education.map((edu) => (
               <div key={edu.id} style={entryStyle}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2">
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                }}>
                   <div>
                     <p className="font-bold" style={{ color: colors.heading }}>
                       {edu.degree}{edu.field && ` in ${edu.field}`}
@@ -184,14 +202,24 @@ export function ClassicExecutive({ data, colors, isExport = false }: ClassicExec
 
         </div>
 
-        <aside className="min-w-0 lg:border-l lg:pl-6" style={{ borderColor: `${colors.primary}30` }}>
+        <aside style={{
+          minWidth: 0,
+          borderLeftWidth: '1px',
+          borderLeftStyle: 'solid',
+          paddingLeft: '1.5rem', /* pl-6 = 1.5rem */
+          borderColor: `${colors.primary}30`,
+        }}>
       {/* Skills */}
       {skills.length > 0 && (
         <section style={sectionStyle} data-section="skills">
           <h2 style={headingStyle2}>
             Core Competencies
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: '1rem', /* gap-4 = 1rem */
+          }}>
             {['technical', 'framework', 'database', 'cloud', 'tool', 'language', 'soft', 'other'].map(category => {
               const categorySkills = skills.filter(s => s.category === category)
               if (categorySkills.length === 0) return null
@@ -224,7 +252,12 @@ export function ClassicExecutive({ data, colors, isExport = false }: ClassicExec
           <div className="space-y-[var(--space-item)]">
             {certifications.map((cert) => (
               <div key={cert.id} className="p-3 border-l-4" style={{ borderColor: colors.primary }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2">
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                }}>
                   <div>
                     <p className="font-bold" style={{ color: colors.heading }}>{cert.name}</p>
                     <p className="text-sm text-[var(--muted-foreground)]">{cert.issuer}</p>

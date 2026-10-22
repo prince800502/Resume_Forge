@@ -62,7 +62,13 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
     <div className="minimal-essentials-template" style={style} data-template="minimal-essentials">
       {/* Header - Clean and minimal */}
       <header className="mb-[var(--space-section)] pb-[var(--space-heading)] border-b" style={{ borderColor: `${colors.primary}30` }}>
-        <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4">
+        <div style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'baseline',
+          justifyContent: 'space-between',
+          gap: '1rem',
+        }}>
           <div>
             <h1 className="text-3xl md:text-4xl mb-1" style={headingStyle}>
               {personal.firstName} {personal.lastName}
@@ -73,13 +79,23 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
               </p>
             )}
           </div>
-          <div className="text-right md:text-right">
-            <div className="flex flex-col md:flex-row md:justify-end gap-2 text-sm text-[var(--muted-foreground)]">
-              {personal.email && <span>{personal.email}</span>}
-              {personal.phone && <span>{personal.phone}</span>}
-              {personal.location && <span>{personal.location}</span>}
-            </div>
-            <div className="mt-2 flex flex-col md:flex-row md:justify-end gap-2 text-sm">
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+            gap: '0.5rem',
+          }}>
+            {personal.email && <span>{personal.email}</span>}
+            {personal.phone && <span>{personal.phone}</span>}
+            {personal.location && <span>{personal.location}</span>}
+          </div>
+          <div style={{
+            display: 'flex',
+            flexDirection: 'row',
+            justifyContent: 'flex-end',
+            gap: '0.5rem',
+            marginTop: '0.5rem',
+          }}>
               {personal.linkedin && (
                 <a href={personal.linkedin.startsWith('http') ? personal.linkedin : `https://${personal.linkedin}`} 
                    target="_blank" rel="noopener noreferrer" className="underline hover:no-underline" style={{ color: colors.accent }}>
@@ -99,7 +115,6 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
                 </a>
               )}
             </div>
-          </div>
         </div>
       </header>
 
@@ -122,7 +137,13 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
           <div className="space-y-[var(--space-entry)]">
             {experience.map((exp) => (
               <div key={exp.id} style={entryStyle}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-[var(--space-tight)]">
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                  marginBottom: 'var(--space-tight)',
+                }}>
                   <div>
                     <h3 className="font-medium text-lg" style={headingStyle}>{exp.position}</h3>
                     <p style={{ color: colors.accent }}>{exp.company}</p>
@@ -160,7 +181,13 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
           </h2>
           <div className="space-y-[var(--space-item)]">
             {education.map((edu) => (
-              <div key={edu.id} className="flex flex-col md:flex-row md:justify-between gap-2" style={entryStyle}>
+              <div key={edu.id} style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                  marginBottom: 'var(--space-entry)',
+                }}>
                 <div>
                   <p className="font-medium" style={headingStyle}>
                     {edu.degree}{edu.field && ` in ${edu.field}`}
@@ -204,7 +231,13 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
           <div className="space-y-[var(--space-item)]">
             {projects.map((project) => (
               <div key={project.id} style={entryStyle}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-[var(--space-tight)]">
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                  marginBottom: 'var(--space-tight)',
+                }}>
                   <h3 className="font-medium" style={headingStyle}>{project.name}</h3>
                   <div className="flex gap-3">
                     {project.url && (
@@ -239,8 +272,17 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
           </h2>
           <div className="space-y-[var(--space-tight)]">
             {certifications.map((cert) => (
-              <div key={cert.id} className="flex flex-col md:flex-row md:justify-between gap-2 p-3" 
-                   style={{ borderColor: `${colors.primary}20`, borderWidth: '1px', borderStyle: 'solid', borderRadius: 'var(--radius-card)' }}>
+              <div key={cert.id} style={{
+                display: 'flex',
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                gap: '0.5rem',
+                padding: '0.75rem',
+                borderColor: `${colors.primary}20`,
+                borderWidth: '1px',
+                borderStyle: 'solid',
+                borderRadius: 'var(--radius-card)',
+              }}>
                 <div>
                   <p className="font-medium" style={headingStyle}>{cert.name}</p>
                   <p className="text-sm text-[var(--muted-foreground)]">{cert.issuer} • {formatDate(cert.date)}</p>

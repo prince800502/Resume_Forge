@@ -59,7 +59,13 @@ export function CreativePortfolio({ data, colors, isExport = false }: CreativePo
     <div className="creative-portfolio-template" style={style} data-template="creative-portfolio">
       {/* Header with creative flair */}
       <header style={sectionStyle} className="relative">
-        <div className="relative flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+        <div style={{
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: '1.5rem',
+        }}>
           <div className="relative z-10">
             <h1 className="text-4xl md:text-5xl font-bold mb-2 leading-tight" style={headingStyle}>
               {personal.firstName} <span style={{ color: colors.accent }}>{personal.lastName}</span>
@@ -120,7 +126,13 @@ export function CreativePortfolio({ data, colors, isExport = false }: CreativePo
           <div className="space-y-[var(--space-entry)]">
             {projects.map((project, index) => (
               <div key={project.id} className="p-4 border" style={{ ...entryStyle, borderColor: `${colors.primary}30`, backgroundColor: `${colors.primary}05`, borderRadius: 'var(--radius-card)' }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-4 mb-[var(--space-tight)]">
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                  marginBottom: 'var(--space-tight)',
+                }}>
                   <div>
                     <h3 className="text-xl font-bold mb-1" style={headingStyle}>
                       {project.name}
@@ -195,7 +207,13 @@ export function CreativePortfolio({ data, colors, isExport = false }: CreativePo
                   </div>
                   
                   <div className="flex-1 p-4 border transition-all duration-300" style={{ borderColor: `${colors.primary}20`, backgroundColor: `${colors.primary}05`, borderRadius: 'var(--radius-card)' }}>
-                    <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-[var(--space-item)]">
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      gap: '0.5rem',
+                      marginBottom: 'var(--space-item)',
+                    }}>
                       <div>
                         <h3 className="font-bold text-lg" style={headingStyle}>{exp.position}</h3>
                         <p style={{ color: colors.accent }}>{exp.company}</p>
@@ -241,7 +259,12 @@ export function CreativePortfolio({ data, colors, isExport = false }: CreativePo
           <div className="space-y-[var(--space-entry)]">
             {education.map((edu) => (
               <div key={edu.id} className="p-4 border transition-all" style={{ ...entryStyle, borderColor: `${colors.secondary}30`, backgroundColor: `${colors.secondary}05`, borderRadius: 'var(--radius-card)' }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-4">
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  gap: '1rem',
+                }}>
                   <div>
                     <p className="font-bold" style={headingStyle}>
                       {edu.degree}{edu.field && ` in ${edu.field}`}
@@ -273,7 +296,10 @@ export function CreativePortfolio({ data, colors, isExport = false }: CreativePo
           <h2 style={headingStyle2}>
             Toolkit
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid" style={{
+            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+            gap: '1rem',
+          }}>
             {['technical', 'framework', 'database', 'cloud', 'tool', 'language', 'soft', 'other'].map(category => {
               const categorySkills = skills.filter(s => s.category === category)
               if (categorySkills.length === 0) return null

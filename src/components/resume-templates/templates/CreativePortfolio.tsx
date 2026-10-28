@@ -55,45 +55,100 @@ export function CreativePortfolio({ data, colors, isExport = false }: CreativePo
     marginBottom: 'var(--space-entry)',
   }
 
+  // Inline styles for layout-critical elements
+  const headerFlex = {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: '1.5rem',
+  } as React.CSSProperties
+
+  const headerContactStyle = {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '1rem',
+    fontSize: '0.875rem',
+  } as React.CSSProperties
+
+  const flexRowBetweenGap1 = {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: '1rem',
+  } as React.CSSProperties
+
+  const flexGap3 = {
+    display: 'flex',
+    gap: '0.75rem',
+  } as React.CSSProperties
+
+  const flexGap2 = {
+    display: 'flex',
+    gap: '0.5rem',
+  } as React.CSSProperties
+
+  const flexWrapGap2 = {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '0.5rem',
+  } as React.CSSProperties
+
+  const textRight = {
+    textAlign: 'right' as const,
+  } as React.CSSProperties
+
+  const flexRowBetween = {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: '0.5rem',
+  } as React.CSSProperties
+
+  const skillsGrid = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+    gap: '1rem',
+  } as React.CSSProperties
+
+  const experienceFlex = {
+    display: 'flex',
+    gap: '1.5rem',
+  } as React.CSSProperties
+
   return (
     <div className="creative-portfolio-template" style={style} data-template="creative-portfolio">
       {/* Header with creative flair */}
-      <header style={sectionStyle} className="relative">
-        <div style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          gap: '1.5rem',
-        }}>
-          <div className="relative z-10">
-            <h1 className="text-4xl md:text-5xl font-bold mb-2 leading-tight" style={headingStyle}>
+      <header style={sectionStyle}>
+        <div style={headerFlex}>
+          <div style={{ position: 'relative', zIndex: 10 }}>
+            <h1 style={{ ...headingStyle, fontSize: 'clamp(2.25rem, 5vw, 3rem)', fontWeight: 'bold', marginBottom: '0.5rem', lineHeight: '1.2' }}>
               {personal.firstName} <span style={{ color: colors.accent }}>{personal.lastName}</span>
             </h1>
             {personal.title && (
-              <p className="text-xl font-medium mb-4" style={{ color: colors.accent }}>
+              <p style={{ fontSize: '1.25rem', fontWeight: '500', marginBottom: '1rem', color: colors.accent }}>
                 {personal.title}
               </p>
             )}
-            <div className="flex flex-wrap gap-4 text-sm" style={{ color: colors.text }}>
-              {personal.email && <span className="opacity-80">{personal.email}</span>}
-              {personal.phone && <span className="opacity-80">{personal.phone}</span>}
-              {personal.location && <span className="opacity-80">{personal.location}</span>}
+            <div style={{ ...headerContactStyle, color: colors.text }}>
+              {personal.email && <span style={{ opacity: 0.8 }}>{personal.email}</span>}
+              {personal.phone && <span style={{ opacity: 0.8 }}>{personal.phone}</span>}
+              {personal.location && <span style={{ opacity: 0.8 }}>{personal.location}</span>}
               {personal.linkedin && (
                 <a href={personal.linkedin.startsWith('http') ? personal.linkedin : `https://${personal.linkedin}`} 
-                   target="_blank" rel="noopener noreferrer" className="underline hover:no-underline opacity-80 hover:opacity-100 transition-opacity" style={{ color: colors.accent }}>
+                   target="_blank" rel="noopener noreferrer" style={{ color: colors.accent, textDecoration: 'underline', opacity: 0.8 }}>
                   LinkedIn
                 </a>
               )}
               {personal.github && (
                 <a href={personal.github.startsWith('http') ? personal.github : `https://${personal.github}`} 
-                   target="_blank" rel="noopener noreferrer" className="underline hover:no-underline opacity-80 hover:opacity-100 transition-opacity" style={{ color: colors.accent }}>
+                   target="_blank" rel="noopener noreferrer" style={{ color: colors.accent, textDecoration: 'underline', opacity: 0.8 }}>
                   GitHub
                 </a>
               )}
               {personal.website && (
                 <a href={personal.website.startsWith('http') ? personal.website : `https://${personal.website}`} 
-                   target="_blank" rel="noopener noreferrer" className="underline hover:no-underline opacity-80 hover:opacity-100 transition-opacity" style={{ color: colors.accent }}>
+                   target="_blank" rel="noopener noreferrer" style={{ color: colors.accent, textDecoration: 'underline', opacity: 0.8 }}>
                   Portfolio
                 </a>
               )}
@@ -104,14 +159,14 @@ export function CreativePortfolio({ data, colors, isExport = false }: CreativePo
 
       {/* Creative Summary */}
       {summary && (
-        <section style={sectionStyle} className="relative" data-section="summary">
-          <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: colors.accent }} />
-          <div className="pl-6 relative">
+        <section style={sectionStyle} data-section="summary">
+          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '0.25rem', backgroundColor: colors.accent }} />
+          <div style={{ paddingLeft: '1.5rem', position: 'relative' }}>
             <h2 style={headingStyle2}>
               Creative Statement
             </h2>
-            <div className="p-4 rounded-lg" style={{ backgroundColor: `${colors.primary}10`, border: `1px solid ${colors.primary}20`, borderRadius: 'var(--radius-card)' }}>
-              <p className="text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">{summary}</p>
+            <div style={{ padding: '1rem', borderRadius: 'var(--radius-card)', backgroundColor: `${colors.primary}10`, border: `1px solid ${colors.primary}20` }}>
+              <p style={{ color: 'var(--foreground)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{summary}</p>
             </div>
           </div>
         </section>
@@ -123,49 +178,40 @@ export function CreativePortfolio({ data, colors, isExport = false }: CreativePo
           <h2 style={headingStyle2}>
             Featured Work
           </h2>
-          <div className="space-y-[var(--space-entry)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
             {projects.map((project, index) => (
-              <div key={project.id} className="p-4 border" style={{ ...entryStyle, borderColor: `${colors.primary}30`, backgroundColor: `${colors.primary}05`, borderRadius: 'var(--radius-card)' }}>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  gap: '1rem',
-                  marginBottom: 'var(--space-tight)',
-                }}>
+              <div key={project.id} style={{ ...entryStyle, padding: '1rem', borderWidth: '1px', borderStyle: 'solid', borderColor: `${colors.primary}30`, backgroundColor: `${colors.primary}05`, borderRadius: 'var(--radius-card)' }}>
+                <div style={{ ...flexRowBetweenGap1, marginBottom: 'var(--space-tight)' }}>
                   <div>
-                    <h3 className="text-xl font-bold mb-1" style={headingStyle}>
+                    <h3 style={{ ...headingStyle, fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>
                       {project.name}
                     </h3>
-                    <p className="text-sm opacity-70" style={{ color: colors.accent }}>
+                    <p style={{ fontSize: '0.875rem', opacity: 0.7, color: colors.accent }}>
                       {project.technologies.slice(0, 3).join(' • ')}
                       {project.technologies.length > 3 && ` +${project.technologies.length - 3} more`}
                     </p>
                   </div>
-                  <div className="flex gap-3">
+                  <div style={flexGap3}>
                     {project.url && (
                       <a href={project.url} target="_blank" rel="noopener noreferrer" 
-                         className="px-3 py-1.5 text-sm font-medium rounded transition-all"
-                         style={{ backgroundColor: colors.primary, color: colors.background, borderRadius: 'var(--radius-card)' }}>
+                         style={{ padding: '0.375rem 0.75rem', fontSize: '0.875rem', fontWeight: '500', borderRadius: 'var(--radius-card)', backgroundColor: colors.primary, color: colors.background }}>
                         View Live
                       </a>
                     )}
                     {project.github && (
                       <a href={project.github} target="_blank" rel="noopener noreferrer" 
-                         className="px-3 py-1.5 text-sm font-medium rounded border transition-all"
-                         style={{ borderColor: colors.accent, color: colors.accent, borderRadius: 'var(--radius-card)' }}>
+                         style={{ padding: '0.375rem 0.75rem', fontSize: '0.875rem', fontWeight: '500', borderRadius: 'var(--radius-card)', borderWidth: '1px', borderStyle: 'solid', borderColor: colors.accent, color: colors.accent }}>
                         Code
                       </a>
                     )}
                   </div>
                 </div>
-                <p className="text-[var(--foreground)] leading-relaxed mb-[var(--space-item)]">{project.description}</p>
+                <p style={{ color: 'var(--foreground)', lineHeight: '1.6', marginBottom: 'var(--space-item)' }}>{project.description}</p>
                 
                 {project.technologies.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
+                  <div style={flexWrapGap2}>
                     {project.technologies.map((tech, i) => (
-                      <span key={i} className="px-2 py-1 text-xs rounded-full"
-                            style={{ backgroundColor: `${colors.accent}15`, color: colors.accent, border: `1px solid ${colors.accent}30`, borderRadius: 'var(--radius-card)' }}>
+                      <span key={i} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderRadius: '9999px', backgroundColor: `${colors.accent}15`, color: colors.accent, border: `1px solid ${colors.accent}30` }}>
                         {tech}
                       </span>
                     ))}
@@ -173,7 +219,7 @@ export function CreativePortfolio({ data, colors, isExport = false }: CreativePo
                 )}
                 
                 {project.highlights.length > 0 && (
-                  <ul className="mt-[var(--space-item)] list-disc list-inside space-y-[var(--space-item)] text-sm text-[var(--foreground)]">
+                  <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: 'var(--space-item)', marginTop: 'var(--space-item)', fontSize: '0.875rem', color: 'var(--foreground)' }}>
                     {project.highlights.map((highlight, i) => (
                       <li key={i}>{highlight}</li>
                     ))}
@@ -191,52 +237,44 @@ export function CreativePortfolio({ data, colors, isExport = false }: CreativePo
           <h2 style={headingStyle2}>
             Journey
           </h2>
-          <div className="relative">
+          <div style={{ position: 'relative' }}>
             {/* Timeline line */}
-            <div className="absolute left-4 top-0 bottom-0 w-0.5" style={{ backgroundColor: `${colors.primary}30` }} />
+            <div style={{ position: 'absolute', left: '1rem', top: 0, bottom: 0, width: '2px', backgroundColor: `${colors.primary}30` }} />
             
-            <div className="space-y-[var(--space-entry)]">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
               {experience.map((exp, index) => (
-                <div key={exp.id} className="relative flex gap-6" style={entryStyle}>
+                <div key={exp.id} style={{ ...entryStyle, ...experienceFlex }}>
                   {/* Timeline dot */}
-                  <div className="relative flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center z-10" 
-                       style={{ backgroundColor: colors.primary, border: `3px solid ${colors.background}` }}>
-                    <span className="text-xs font-bold" style={{ color: colors.background }}>
+                  <div style={{ position: 'relative', flexShrink: 0, width: '2.5rem', height: '2.5rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10, backgroundColor: colors.primary, border: `3px solid ${colors.background}` }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: colors.background }}>
                       {index + 1}
                     </span>
                   </div>
                   
-                  <div className="flex-1 p-4 border transition-all duration-300" style={{ borderColor: `${colors.primary}20`, backgroundColor: `${colors.primary}05`, borderRadius: 'var(--radius-card)' }}>
-                    <div style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      gap: '0.5rem',
-                      marginBottom: 'var(--space-item)',
-                    }}>
+                  <div style={{ flex: 1, padding: '1rem', borderWidth: '1px', borderStyle: 'solid', borderColor: `${colors.primary}20`, backgroundColor: `${colors.primary}05`, borderRadius: 'var(--radius-card)' }}>
+                    <div style={{ ...flexRowBetween, marginBottom: 'var(--space-item)' }}>
                       <div>
-                        <h3 className="font-bold text-lg" style={headingStyle}>{exp.position}</h3>
+                        <h3 style={{ ...headingStyle, fontWeight: 'bold', fontSize: '1.125rem' }}>{exp.position}</h3>
                         <p style={{ color: colors.accent }}>{exp.company}</p>
-                        {exp.location && <p className="text-sm opacity-70">{exp.location}</p>}
+                        {exp.location && <p style={{ fontSize: '0.875rem', opacity: 0.7 }}>{exp.location}</p>}
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium" style={{ color: colors.accent }}>
+                      <div style={textRight}>
+                        <p style={{ fontSize: '0.875rem', fontWeight: '500', color: colors.accent }}>
                           {getDateRange(exp.startDate, exp.endDate, exp.current)}
                         </p>
                       </div>
                     </div>
                     {exp.description.length > 0 && (
-                      <ul className="list-disc list-inside space-y-[var(--space-item)] text-[var(--foreground)] ml-2">
+                      <ul style={{ listStyle: 'disc', paddingLeft: '2rem', display: 'flex', flexDirection: 'column', gap: 'var(--space-item)', color: 'var(--foreground)' }}>
                         {exp.description.map((desc, i) => (
-                          <li key={i} className="leading-relaxed">{desc}</li>
+                          <li key={i} style={{ lineHeight: '1.6' }}>{desc}</li>
                         ))}
                       </ul>
                     )}
                     {exp.technologies.length > 0 && (
-                      <div className="mt-[var(--space-item)] flex flex-wrap gap-2">
+                      <div style={{ ...flexWrapGap2, marginTop: 'var(--space-item)' }}>
                         {exp.technologies.map((tech, i) => (
-                          <span key={i} className="px-2 py-1 text-xs rounded-full"
-                                style={{ backgroundColor: `${colors.accent}20`, color: colors.accent, border: `1px solid ${colors.accent}40`, borderRadius: 'var(--radius-card)' }}>
+                          <span key={i} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderRadius: '9999px', backgroundColor: `${colors.accent}20`, color: colors.accent, border: `1px solid ${colors.accent}40` }}>
                             {tech}
                           </span>
                         ))}
@@ -256,32 +294,27 @@ export function CreativePortfolio({ data, colors, isExport = false }: CreativePo
           <h2 style={headingStyle2}>
             Education
           </h2>
-          <div className="space-y-[var(--space-entry)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
             {education.map((edu) => (
-              <div key={edu.id} className="p-4 border transition-all" style={{ ...entryStyle, borderColor: `${colors.secondary}30`, backgroundColor: `${colors.secondary}05`, borderRadius: 'var(--radius-card)' }}>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  gap: '1rem',
-                }}>
+              <div key={edu.id} style={{ ...entryStyle, padding: '1rem', borderWidth: '1px', borderStyle: 'solid', borderColor: `${colors.secondary}30`, backgroundColor: `${colors.secondary}05`, borderRadius: 'var(--radius-card)' }}>
+                <div style={{ ...flexRowBetweenGap1 }}>
                   <div>
-                    <p className="font-bold" style={headingStyle}>
+                    <p style={{ ...headingStyle, fontWeight: 'bold' }}>
                       {edu.degree}{edu.field && ` in ${edu.field}`}
                     </p>
                     <p style={{ color: colors.accent }}>{edu.institution}</p>
-                    {edu.location && <p className="text-sm opacity-70">{edu.location}</p>}
+                    {edu.location && <p style={{ fontSize: '0.875rem', opacity: 0.7 }}>{edu.location}</p>}
                     {edu.honors && edu.honors.length > 0 && (
-                      <p className="text-sm opacity-70 mt-1">
+                      <p style={{ fontSize: '0.875rem', opacity: 0.7, marginTop: '0.25rem' }}>
                         Honors: {edu.honors.join(', ')}
                       </p>
                     )}
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium" style={{ color: colors.accent }}>
+                  <div style={textRight}>
+                    <p style={{ fontSize: '0.875rem', fontWeight: '500', color: colors.accent }}>
                       {getDateRange(edu.startDate, edu.endDate, edu.current)}
                     </p>
-                    {edu.gpa && <p className="text-sm opacity-70">GPA: {edu.gpa}</p>}
+                    {edu.gpa && <p style={{ fontSize: '0.875rem', opacity: 0.7 }}>GPA: {edu.gpa}</p>}
                   </div>
                 </div>
               </div>
@@ -296,25 +329,21 @@ export function CreativePortfolio({ data, colors, isExport = false }: CreativePo
           <h2 style={headingStyle2}>
             Toolkit
           </h2>
-          <div className="grid" style={{
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '1rem',
-          }}>
+          <div style={skillsGrid}>
             {['technical', 'framework', 'database', 'cloud', 'tool', 'language', 'soft', 'other'].map(category => {
               const categorySkills = skills.filter(s => s.category === category)
               if (categorySkills.length === 0) return null
               
               return (
-                <div key={category} className="p-4 border" style={{ borderColor: `${colors.primary}20`, backgroundColor: `${colors.primary}05`, borderRadius: 'var(--radius-card)' }}>
-                  <h3 className="text-xs font-bold mb-3 tracking-wider capitalize" style={{ ...headingStyle, textTransform: 'uppercase' }}>
+                <div key={category} style={{ padding: '1rem', borderWidth: '1px', borderStyle: 'solid', borderColor: `${colors.primary}20`, backgroundColor: `${colors.primary}05`, borderRadius: 'var(--radius-card)' }}>
+                  <h3 style={{ ...headingStyle, fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '0.75rem', textTransform: 'uppercase' }}>
                     {category}
                   </h3>
-                  <div className="flex flex-wrap gap-2">
+                  <div style={flexWrapGap2}>
                     {categorySkills.map((skill) => (
-                      <span key={skill.id} className="px-3 py-1 text-sm rounded-full transition-transform"
-                            style={{ backgroundColor: `${colors.accent}15`, color: colors.accent, border: `1px solid ${colors.accent}30`, borderRadius: 'var(--radius-card)' }}>
+                      <span key={skill.id} style={{ padding: '0.5rem 0.75rem', fontSize: '0.875rem', borderRadius: 'var(--radius-card)', backgroundColor: `${colors.accent}15`, color: colors.accent, border: `1px solid ${colors.accent}30` }}>
                         {skill.name}
-                        <span className="ml-1 text-xs opacity-60">({skill.proficiency})</span>
+                        <span style={{ marginLeft: '0.25rem', fontSize: '0.75rem', opacity: 0.6 }}>({skill.proficiency})</span>
                       </span>
                     ))}
                   </div>
@@ -331,13 +360,13 @@ export function CreativePortfolio({ data, colors, isExport = false }: CreativePo
           <h2 style={headingStyle2}>
             {section.title.toUpperCase()}
           </h2>
-          <div className="space-y-[var(--space-entry)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
             {section.items.map((item) => (
-              <div key={item.id} className="p-4 border" style={{ borderColor: `${colors.secondary}30`, backgroundColor: `${colors.secondary}05`, borderRadius: 'var(--radius-card)' }}>
-                <h3 className="font-bold mb-1" style={headingStyle}>{item.title}</h3>
-                {item.subtitle && <p className="text-sm" style={{ color: colors.accent }}>{item.subtitle}</p>}
-                {item.date && <p className="text-sm opacity-70">{item.date}</p>}
-                {item.description && <p className="mt-2 text-[var(--foreground)]">{item.description}</p>}
+              <div key={item.id} style={{ padding: '1rem', borderWidth: '1px', borderStyle: 'solid', borderColor: `${colors.secondary}30`, backgroundColor: `${colors.secondary}05`, borderRadius: 'var(--radius-card)' }}>
+                <h3 style={{ ...headingStyle, fontWeight: 'bold', marginBottom: '0.25rem' }}>{item.title}</h3>
+                {item.subtitle && <p style={{ fontSize: '0.875rem', color: colors.accent }}>{item.subtitle}</p>}
+                {item.date && <p style={{ fontSize: '0.875rem', opacity: 0.7 }}>{item.date}</p>}
+                {item.description && <p style={{ marginTop: '0.5rem', color: 'var(--foreground)' }}>{item.description}</p>}
               </div>
             ))}
           </div>

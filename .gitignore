@@ -18,3 +18,16 @@ handlers_to_insert.tsx
 new_return.tsx
 original_settings.tsx
 recovery-backup.patch
+.vercel
+.env*
+
+# Test artifacts and reports
+*_REPORT.md
+*_FIX_REPORT.md
+*_AUDIT_REPORT.md
+*_QA_REPORT.md
+*_SUMMARY.md
+*.cjs
+!src/**/*.cjs
+test-output/
+server.mjs

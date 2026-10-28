@@ -57,39 +57,93 @@ export function TechModern({ data, colors, isExport = false }: TechModernProps) 
     marginBottom: 'var(--space-entry)',
   }
 
+  // Inline styles for layout-critical elements
+  const flexRowBetween = {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: '0.5rem',
+  } as React.CSSProperties
+
+  const flexWrapGap4 = {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '1rem',
+  } as React.CSSProperties
+
+  const flexWrapGap2 = {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '0.5rem',
+  } as React.CSSProperties
+
+  const flexGap2 = {
+    display: 'flex',
+    gap: '0.5rem',
+  } as React.CSSProperties
+
+  const textRight = {
+    textAlign: 'right' as const,
+  } as React.CSSProperties
+
+  const headerContactStyle = {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '1rem',
+    fontSize: '0.875rem',
+  } as React.CSSProperties
+
+  const certFlex = {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'flex-start',
+    gap: '0.5rem',
+    padding: '0.75rem',
+    borderRadius: 'var(--radius-card)',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+  } as React.CSSProperties
+
+  const projectFlex = {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: '0.5rem',
+  } as React.CSSProperties
+
   return (
     <div className="tech-modern-template" style={style} data-template="tech-modern">
       {/* Header with accent bar */}
-      <header className="mb-[var(--space-section)] relative">
-        <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: colors.primary }} />
-        <div className="pl-6">
-          <h1 className="text-3xl md:text-4xl font-bold mb-1" style={headingStyle}>
+      <header style={{ ...sectionStyle, position: 'relative' }}>
+        <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '0.25rem', backgroundColor: colors.primary }} />
+        <div style={{ paddingLeft: '1.5rem' }}>
+          <h1 style={{ ...headingStyle, fontSize: 'clamp(1.875rem, 4vw, 2.25rem)', fontWeight: 'bold', marginBottom: '0.25rem' }}>
             {personal.firstName} {personal.lastName}
           </h1>
           {personal.title && (
-            <p className="text-lg font-medium mb-4" style={{ color: colors.accent }}>
+            <p style={{ fontSize: '1.125rem', fontWeight: '500', marginBottom: '1rem', color: colors.accent }}>
               {personal.title}
             </p>
           )}
-          <div className="flex flex-wrap gap-4 text-sm text-[var(--muted-foreground)]">
-            {personal.email && <span>{personal.email}</span>}
-            {personal.phone && <span>{personal.phone}</span>}
-            {personal.location && <span>{personal.location}</span>}
+          <div style={headerContactStyle}>
+            {personal.email && <span style={{ color: 'var(--muted-foreground)' }}>{personal.email}</span>}
+            {personal.phone && <span style={{ color: 'var(--muted-foreground)' }}>{personal.phone}</span>}
+            {personal.location && <span style={{ color: 'var(--muted-foreground)' }}>{personal.location}</span>}
             {personal.linkedin && (
               <a href={personal.linkedin.startsWith('http') ? personal.linkedin : `https://${personal.linkedin}`} 
-                 target="_blank" rel="noopener noreferrer" className="underline hover:no-underline" style={{ color: colors.accent }}>
+                 target="_blank" rel="noopener noreferrer" style={{ color: colors.accent, textDecoration: 'underline' }}>
                 LinkedIn
               </a>
             )}
             {personal.github && (
               <a href={personal.github.startsWith('http') ? personal.github : `https://${personal.github}`} 
-                 target="_blank" rel="noopener noreferrer" className="underline hover:no-underline" style={{ color: colors.accent }}>
+                 target="_blank" rel="noopener noreferrer" style={{ color: colors.accent, textDecoration: 'underline' }}>
                 GitHub
               </a>
             )}
             {personal.website && (
               <a href={personal.website.startsWith('http') ? personal.website : `https://${personal.website}`} 
-                 target="_blank" rel="noopener noreferrer" className="underline hover:no-underline" style={{ color: colors.accent }}>
+                 target="_blank" rel="noopener noreferrer" style={{ color: colors.accent, textDecoration: 'underline' }}>
                 Portfolio
               </a>
             )}
@@ -103,8 +157,8 @@ export function TechModern({ data, colors, isExport = false }: TechModernProps) 
           <h2 style={headingStyle2}>
             About
           </h2>
-          <div className="p-4 rounded-lg" style={{ backgroundColor: `${colors.primary}10`, borderColor: `${colors.primary}30`, borderRadius: 'var(--radius-card)' }}>
-            <p className="text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">{summary}</p>
+          <div style={{ padding: '1rem', borderRadius: 'var(--radius-card)', backgroundColor: `${colors.primary}10`, borderColor: `${colors.primary}30`, borderWidth: '1px', borderStyle: 'solid' }}>
+            <p style={{ color: 'var(--foreground)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{summary}</p>
           </div>
         </section>
       )}
@@ -115,22 +169,21 @@ export function TechModern({ data, colors, isExport = false }: TechModernProps) 
           <h2 style={headingStyle2}>
             Tech Stack
           </h2>
-          <div className="space-y-[var(--space-entry)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
             {['technical', 'framework', 'database', 'cloud', 'tool'].map(category => {
               const categorySkills = skills.filter(s => s.category === category)
               if (categorySkills.length === 0) return null
               
               return (
                 <div key={category}>
-                  <h3 className="text-sm font-bold mb-2 capitalize tracking-wide" style={{ color: colors.heading, textTransform: 'uppercase' }}>
+                  <h3 style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '0.5rem', color: colors.heading, textTransform: 'uppercase' }}>
                     {category}
                   </h3>
-                  <div className="flex flex-wrap gap-2">
+                  <div style={flexWrapGap2}>
                     {categorySkills.map((skill) => (
-                      <span key={skill.id} className="px-3 py-1 text-sm rounded" 
-                            style={{ backgroundColor: `${colors.primary}15`, color: colors.primary, border: `1px solid ${colors.primary}30`, borderRadius: 'var(--radius-card)' }}>
+                      <span key={skill.id} style={{ padding: '0.5rem 0.75rem', fontSize: '0.875rem', borderRadius: 'var(--radius-card)', backgroundColor: `${colors.primary}15`, color: colors.primary, border: `1px solid ${colors.primary}30` }}>
                         {skill.name}
-                        <span className="ml-1 text-xs opacity-60">({skill.proficiency})</span>
+                        <span style={{ marginLeft: '0.25rem', fontSize: '0.75rem', opacity: 0.6 }}>({skill.proficiency})</span>
                       </span>
                     ))}
                   </div>
@@ -144,10 +197,10 @@ export function TechModern({ data, colors, isExport = false }: TechModernProps) 
               
               return (
                 <div key={category}>
-                  <h3 className="text-sm font-bold mb-2 capitalize tracking-wide" style={{ color: colors.heading, textTransform: 'uppercase' }}>
+                  <h3 style={{ fontSize: '0.875rem', fontWeight: 'bold', marginBottom: '0.5rem', color: colors.heading, textTransform: 'uppercase' }}>
                     {category}
                   </h3>
-                  <p className="text-sm text-[var(--muted-foreground)]">
+                  <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', lineHeight: '1.6' }}>
                     {categorySkills.map((skill, i) => (
                       <span key={skill.id}>
                         {skill.name} ({skill.proficiency}){i < categorySkills.length - 1 ? ', ' : ''}
@@ -167,39 +220,32 @@ export function TechModern({ data, colors, isExport = false }: TechModernProps) 
           <h2 style={headingStyle2}>
             Experience
           </h2>
-          <div className="space-y-[var(--space-entry)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
             {experience.map((exp) => (
-              <div key={exp.id} className="relative pl-6 border-l-2" style={{ ...entryStyle, borderColor: colors.primary }}>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  gap: '0.5rem',
-                  marginBottom: 'var(--space-tight)',
-                }}>
+              <div key={exp.id} style={{ ...entryStyle, position: 'relative', paddingLeft: '1.5rem', borderLeftWidth: '2px', borderLeftStyle: 'solid', borderLeftColor: colors.primary }}>
+                <div style={{ ...flexRowBetween, marginBottom: 'var(--space-tight)' }}>
                   <div>
-                    <h3 className="font-bold" style={{ color: colors.heading }}>{exp.position}</h3>
-                    <p className="font-medium" style={{ color: colors.accent }}>{exp.company}</p>
-                    {exp.location && <p className="text-sm text-[var(--muted-foreground)]">{exp.location}</p>}
+                    <h3 style={{ fontWeight: 'bold', color: colors.heading }}>{exp.position}</h3>
+                    <p style={{ fontWeight: '500', color: colors.accent }}>{exp.company}</p>
+                    {exp.location && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{exp.location}</p>}
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium" style={{ color: colors.accent }}>
+                  <div style={textRight}>
+                    <p style={{ fontSize: '0.875rem', fontWeight: '500', color: colors.accent }}>
                       {getDateRange(exp.startDate, exp.endDate, exp.current)}
                     </p>
                   </div>
                 </div>
                 {exp.description.length > 0 && (
-                  <ul className="list-disc list-inside space-y-[var(--space-item)] text-[var(--foreground)] ml-2">
+                  <ul style={{ listStyle: 'disc', paddingLeft: '2rem', display: 'flex', flexDirection: 'column', gap: 'var(--space-item)', color: 'var(--foreground)' }}>
                     {exp.description.map((desc, i) => (
-                      <li key={i} className="leading-relaxed">{desc}</li>
+                      <li key={i} style={{ lineHeight: '1.6' }}>{desc}</li>
                     ))}
                   </ul>
                 )}
                 {exp.technologies.length > 0 && (
-                  <div className="mt-[var(--space-item)] flex flex-wrap gap-2">
+                  <div style={{ ...flexWrapGap2, marginTop: 'var(--space-item)' }}>
                     {exp.technologies.map((tech, i) => (
-                      <span key={i} className="px-2 py-0.5 text-xs rounded" 
-                            style={{ backgroundColor: `${colors.accent}20`, color: colors.accent, border: `1px solid ${colors.accent}40`, borderRadius: 'var(--radius-card)' }}>
+                      <span key={i} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderRadius: 'var(--radius-card)', backgroundColor: `${colors.accent}20`, color: colors.accent, border: `1px solid ${colors.accent}40` }}>
                         {tech}
                       </span>
                     ))}
@@ -217,43 +263,36 @@ export function TechModern({ data, colors, isExport = false }: TechModernProps) 
           <h2 style={headingStyle2}>
             Projects
           </h2>
-          <div className="space-y-[var(--space-entry)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
             {projects.map((project) => (
-              <div key={project.id} className="p-4 border" style={{ ...entryStyle, borderColor: `${colors.primary}30`, backgroundColor: `${colors.primary}05`, borderRadius: 'var(--radius-card)' }}>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  gap: '0.5rem',
-                  marginBottom: 'var(--space-tight)',
-                }}>
-                  <h3 className="font-bold" style={{ color: colors.heading }}>{project.name}</h3>
-                  <div className="flex gap-2">
+              <div key={project.id} style={{ ...entryStyle, padding: '1rem', borderWidth: '1px', borderStyle: 'solid', borderColor: `${colors.primary}30`, backgroundColor: `${colors.primary}05`, borderRadius: 'var(--radius-card)' }}>
+                <div style={{ ...projectFlex, marginBottom: 'var(--space-tight)' }}>
+                  <h3 style={{ fontWeight: 'bold', color: colors.heading }}>{project.name}</h3>
+                  <div style={flexGap2}>
                     {project.url && (
-                      <a href={project.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium" style={{ color: colors.accent }}>
+                      <a href={project.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.875rem', fontWeight: '500', color: colors.accent, textDecoration: 'underline' }}>
                         Live
                       </a>
                     )}
                     {project.github && (
-                      <a href={project.github} target="_blank" rel="noopener noreferrer" className="text-sm font-medium" style={{ color: colors.accent }}>
+                      <a href={project.github} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.875rem', fontWeight: '500', color: colors.accent, textDecoration: 'underline' }}>
                         Code
                       </a>
                     )}
                   </div>
                 </div>
-                <p className="text-[var(--foreground)] mb-[var(--space-item)]">{project.description}</p>
+                <p style={{ color: 'var(--foreground)', marginBottom: 'var(--space-item)' }}>{project.description}</p>
                 {project.technologies.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-[var(--space-item)]">
+                  <div style={{ ...flexWrapGap2, marginBottom: 'var(--space-item)' }}>
                     {project.technologies.map((tech, i) => (
-                      <span key={i} className="px-2 py-0.5 text-xs rounded" 
-                            style={{ backgroundColor: `${colors.secondary}20`, color: colors.secondary, border: `1px solid ${colors.secondary}40`, borderRadius: 'var(--radius-card)' }}>
+                      <span key={i} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderRadius: 'var(--radius-card)', backgroundColor: `${colors.secondary}20`, color: colors.secondary, border: `1px solid ${colors.secondary}40` }}>
                         {tech}
                       </span>
                     ))}
                   </div>
                 )}
                 {project.highlights.length > 0 && (
-                  <ul className="list-disc list-inside space-y-[var(--space-item)] text-sm text-[var(--foreground)] ml-2">
+                  <ul style={{ listStyle: 'disc', paddingLeft: '2rem', display: 'flex', flexDirection: 'column', gap: 'var(--space-item)', fontSize: '0.875rem', color: 'var(--foreground)' }}>
                     {project.highlights.map((highlight, i) => (
                       <li key={i}>{highlight}</li>
                     ))}
@@ -271,27 +310,22 @@ export function TechModern({ data, colors, isExport = false }: TechModernProps) 
           <h2 style={headingStyle2}>
             Education
           </h2>
-          <div className="space-y-[var(--space-item)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-item)' }}>
             {education.map((edu) => (
-              <div key={edu.id} className="p-3 border" style={{ ...entryStyle, borderColor: `${colors.primary}20`, borderRadius: 'var(--radius-card)' }}>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  gap: '0.5rem',
-                }}>
+              <div key={edu.id} style={{ ...entryStyle, padding: '0.75rem', borderWidth: '1px', borderStyle: 'solid', borderColor: `${colors.primary}20`, borderRadius: 'var(--radius-card)' }}>
+                <div style={flexRowBetween}>
                   <div>
-                    <p className="font-bold" style={{ color: colors.heading }}>
+                    <p style={{ fontWeight: 'bold', color: colors.heading }}>
                       {edu.degree}{edu.field && ` in ${edu.field}`}
                     </p>
-                    <p className="text-[var(--foreground)]">{edu.institution}</p>
-                    {edu.location && <p className="text-sm text-[var(--muted-foreground)]">{edu.location}</p>}
+                    <p style={{ color: 'var(--foreground)' }}>{edu.institution}</p>
+                    {edu.location && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{edu.location}</p>}
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm" style={{ color: colors.accent }}>
+                  <div style={textRight}>
+                    <p style={{ fontSize: '0.875rem', color: colors.accent }}>
                       {getDateRange(edu.startDate, edu.endDate, edu.current)}
                     </p>
-                    {edu.gpa && <p className="text-sm text-[var(--muted-foreground)]">GPA: {edu.gpa}</p>}
+                    {edu.gpa && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>GPA: {edu.gpa}</p>}
                   </div>
                 </div>
               </div>
@@ -306,16 +340,21 @@ export function TechModern({ data, colors, isExport = false }: TechModernProps) 
           <h2 style={headingStyle2}>
             Languages
           </h2>
-          <div className="flex flex-wrap gap-2">
+          <div style={flexWrapGap2}>
             {languages.map((language) => (
               <div
                 key={language.id}
-                className="inline-flex items-center px-3 py-1.5 text-sm rounded-full border"
                 style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '0.375rem 0.75rem',
+                  fontSize: '0.875rem',
+                  borderRadius: 'var(--radius-card)',
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
                   backgroundColor: `${colors.primary}15`,
                   color: colors.primary,
                   borderColor: `${colors.primary}30`,
-                  borderRadius: 'var(--radius-card)',
                 }}
               >
                 <span style={{ color: colors.primary }}>
@@ -324,8 +363,7 @@ export function TechModern({ data, colors, isExport = false }: TechModernProps) 
 
                 {language.proficiency && (
                   <span
-                    className="ml-1.5 text-xs"
-                    style={{ color: colors.secondary }}
+                    style={{ marginLeft: '0.375rem', fontSize: '0.75rem', color: colors.secondary }}
                   >
                     ({language.proficiency})
                   </span>
@@ -342,16 +380,15 @@ export function TechModern({ data, colors, isExport = false }: TechModernProps) 
           <h2 style={headingStyle2}>
             Certifications
           </h2>
-          <div className="space-y-[var(--space-tight)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-tight)' }}>
             {certifications.map((cert) => (
-              <div key={cert.id} className="flex flex-col md:flex-row md:items-center md:justify-between p-3 rounded-lg border" 
-                   style={{ borderColor: `${colors.primary}30`, borderRadius: 'var(--radius-card)' }}>
+              <div key={cert.id} style={{ ...certFlex, borderColor: `${colors.primary}30` }}>
                 <div>
-                  <p className="font-bold" style={{ color: colors.heading }}>{cert.name}</p>
-                  <p className="text-sm text-[var(--muted-foreground)]">{cert.issuer} • {formatDate(cert.date)}</p>
+                  <p style={{ fontWeight: 'bold', color: colors.heading }}>{cert.name}</p>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{cert.issuer} • {formatDate(cert.date)}</p>
                 </div>
                 {cert.url && (
-                  <a href={cert.url} target="_blank" rel="noopener noreferrer" className="mt-2 md:mt-0 text-sm font-medium" style={{ color: colors.accent }}>
+                  <a href={cert.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.875rem', fontWeight: '500', color: colors.accent, textDecoration: 'underline' }}>
                     Verify
                   </a>
                 )}
@@ -367,13 +404,13 @@ export function TechModern({ data, colors, isExport = false }: TechModernProps) 
           <h2 style={headingStyle2}>
             {section.title.toUpperCase()}
           </h2>
-          <div className="space-y-[var(--space-item)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-item)' }}>
             {section.items.map((item) => (
-              <div key={item.id} className="p-3 rounded-lg border" style={{ borderColor: `${colors.secondary}30`, borderRadius: 'var(--radius-card)' }}>
-                <h3 className="font-bold" style={{ color: colors.heading }}>{item.title}</h3>
-                {item.subtitle && <p className="text-sm" style={{ color: colors.accent }}>{item.subtitle}</p>}
-                {item.date && <p className="text-sm text-[var(--muted-foreground)]">{item.date}</p>}
-                {item.description && <p className="mt-1 text-[var(--foreground)]">{item.description}</p>}
+              <div key={item.id} style={{ padding: '0.75rem', borderRadius: 'var(--radius-card)', borderWidth: '1px', borderStyle: 'solid', borderColor: `${colors.secondary}30`, backgroundColor: `${colors.secondary}05` }}>
+                <h3 style={{ fontWeight: 'bold', color: colors.heading }}>{item.title}</h3>
+                {item.subtitle && <p style={{ fontSize: '0.875rem', color: colors.accent }}>{item.subtitle}</p>}
+                {item.date && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{item.date}</p>}
+                {item.description && <p style={{ marginTop: '0.25rem', color: 'var(--foreground)' }}>{item.description}</p>}
               </div>
             ))}
           </div>

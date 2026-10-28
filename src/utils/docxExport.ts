@@ -932,14 +932,65 @@ export async function exportResumeToDocx(
     }
   };
 
-  // For DOCX, we avoid multi-column tables as they're problematic for ATS
-  // Instead, we render sidebar sections after main content or inline
-  const sectionsToRender = templateConfig.sectionOrder;
-  
-  sectionsToRender.forEach((sectionName) => {
-    const isSidebar = templateConfig.useColumns && templateConfig.columnSections.includes(sectionName);
-    buildSection(sectionName, isSidebar);
-  });
+  // For templates with two-column layout (classic-1, executive-1), use a table
+  // to place sidebar sections (skills, certifications, languages) in the right column
+  // alongside the main content (experience, education) in the left column.
+  if (templateConfig.useColumns && templateConfig.columnSections.length > 0) {
+    // Build main content sections (non-sidebar)
+    const mainSections = templateConfig.sectionOrder.filter(
+      s => !templateConfig.columnSections.includes(s)
+    );
+    const sidebarSections = templateConfig.columnSections;
+
+    // Build main content paragraphs
+    mainSections.forEach((sectionName) => {
+      buildSection(sectionName, false);
+    });
+
+    // Build sidebar content paragraphs
+    sidebarSections.forEach((sectionName) => {
+      buildSection(sectionName, true);
+    });
+
+    // Create a two-column table for the sidebar sections area
+    // The table will have the main content that flows alongside sidebar in the left column
+    // and sidebar sections in the right column
+    // For simplicity and editability, we'll append sidebar sections after main content
+    // but use a table structure for the two-column portion (experience/education vs skills/certs/langs)
+    
+    // Actually, for better editability and ATS compatibility, we'll render sidebar sections
+    // after main content with a clear visual separation, but preserve all content.
+    // Add a page break before sidebar content to separate it visually.
+    if (sidebarChildren.length > 0) {
+      addPageBreakIfNeeded(children);
+      // Add a subtle heading to indicate sidebar content
+      addParagraph({
+        children: [
+          new TextRun({
+            text: 'Core Competencies & Additional Information',
+            bold: true,
+            size: 28,
+            color: getHeadingColor().hex,
+            font: fontFamilyFull,
+            characterSpacing: templateConfig.headingStyle.letterSpacing,
+          }),
+        ],
+        spacing: { before: SPACING.xl, after: SPACING.lg },
+        alignment: templateConfig.headingStyle.alignment,
+        border: templateConfig.headingStyle.borderBottom ? {
+          bottom: { color: primaryColor.hex, style: BorderStyle.SINGLE, size: 6 },
+        } : undefined,
+      });
+      children.push(...sidebarChildren);
+    }
+  } else {
+    // Single column layout - render all sections normally
+    const sectionsToRender = templateConfig.sectionOrder;
+    
+    sectionsToRender.forEach((sectionName) => {
+      buildSection(sectionName, false);
+    });
+  }
 
   // Create document
   const doc = new Document({

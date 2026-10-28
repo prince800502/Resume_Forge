@@ -58,28 +58,76 @@ export function ExecutiveLeadership({ data, colors, isExport = false }: Executiv
     marginBottom: 'var(--space-entry)',
   }
 
+  // Inline styles for layout-critical elements
+  const headerContactStyle = {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    justifyContent: 'center',
+    gap: '1.5rem',
+    fontSize: '0.875rem',
+  } as React.CSSProperties
+
+  const flexRowBetweenGap1 = {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: '1rem',
+  } as React.CSSProperties
+
+  const flexRowBetween = {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: '0.5rem',
+  } as React.CSSProperties
+
+  const textRight = {
+    textAlign: 'right' as const,
+  } as React.CSSProperties
+
+  const skillsGrid = {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+    gap: '1rem',
+  } as React.CSSProperties
+
+  const certFlex = {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '1rem',
+    padding: '1rem',
+    borderLeftWidth: '4px',
+    borderLeftStyle: 'solid' as const,
+  } as React.CSSProperties
+
+  const borderLeft2Style = {
+    paddingLeft: '1.5rem',
+    borderLeftWidth: '2px',
+    borderLeftStyle: 'solid' as const,
+  } as React.CSSProperties
+
   return (
     <div className="executive-leadership-template" style={style} data-template="executive-leadership">
       {/* Header - Formal and centered */}
-      <header className="mb-[var(--space-section)] pb-[var(--space-heading)] border-b-2 text-center" style={{ borderColor: colors.primary }}>
-        <div className="inline-flex items-center gap-3 mb-4" style={{ backgroundColor: colors.primary, borderRadius: 'var(--radius-card)' }}>
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.accent }} />
+      <header style={{ ...sectionStyle, paddingBottom: 'var(--space-heading)', borderBottomWidth: '2px', borderBottomStyle: 'solid', borderBottomColor: colors.primary, textAlign: 'center' }}>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', backgroundColor: colors.primary, borderRadius: 'var(--radius-card)' }}>
+          <div style={{ width: '0.5rem', height: '0.5rem', borderRadius: '50%', backgroundColor: colors.accent }} />
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold mb-2 tracking-wide" style={headingStyle}>
+        <h1 style={{ ...headingStyle, fontSize: 'clamp(2.25rem, 5vw, 3rem)', fontWeight: 'bold', marginBottom: '0.5rem', letterSpacing: '0.02em' }}>
           {personal.firstName} {personal.lastName}
         </h1>
         {personal.title && (
-          <p className="text-xl font-normal mb-6 tracking-wide" style={{ color: colors.accent, textTransform: 'uppercase' }}>
+          <p style={{ fontSize: '1.25rem', fontWeight: 'normal', marginBottom: '1.5rem', letterSpacing: '0.02em', color: colors.accent, textTransform: 'uppercase' }}>
             {personal.title}
           </p>
         )}
-        <div className="flex flex-wrap justify-center gap-6 text-sm" style={{ color: colors.text, opacity: 0.8 }}>
-          {personal.email && <span>{personal.email}</span>}
-          {personal.phone && <span>{personal.phone}</span>}
-          {personal.location && <span>{personal.location}</span>}
+        <div style={headerContactStyle}>
+          {personal.email && <span style={{ opacity: 0.8 }}>{personal.email}</span>}
+          {personal.phone && <span style={{ opacity: 0.8 }}>{personal.phone}</span>}
+          {personal.location && <span style={{ opacity: 0.8 }}>{personal.location}</span>}
           {personal.linkedin && (
             <a href={personal.linkedin.startsWith('http') ? personal.linkedin : `https://${personal.linkedin}`} 
-               target="_blank" rel="noopener noreferrer" className="underline hover:no-underline" style={{ color: colors.accent }}>
+               target="_blank" rel="noopener noreferrer" style={{ color: colors.accent, textDecoration: 'underline', opacity: 0.8 }}>
               LinkedIn
             </a>
           )}
@@ -92,8 +140,8 @@ export function ExecutiveLeadership({ data, colors, isExport = false }: Executiv
           <h2 style={headingStyle2}>
             Executive Summary
           </h2>
-          <div className="p-4 border-l-4" style={{ borderColor: colors.primary, backgroundColor: `${colors.primary}05`, borderRadius: 'var(--radius-card)' }}>
-            <p className="text-[var(--foreground)] leading-relaxed whitespace-pre-wrap text-lg">{summary}</p>
+          <div style={{ padding: '1rem', borderLeftWidth: '4px', borderLeftStyle: 'solid', borderLeftColor: colors.primary, backgroundColor: `${colors.primary}05`, borderRadius: 'var(--radius-card)' }}>
+            <p style={{ color: 'var(--foreground)', lineHeight: '1.6', whiteSpace: 'pre-wrap', fontSize: '1.125rem' }}>{summary}</p>
           </div>
         </section>
       )}
@@ -104,23 +152,20 @@ export function ExecutiveLeadership({ data, colors, isExport = false }: Executiv
           <h2 style={headingStyle2}>
             Core Competencies
           </h2>
-          <div className="grid" style={{
-            gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-            gap: '1rem',
-          }}>
+          <div style={skillsGrid}>
             {['technical', 'framework', 'database', 'cloud', 'tool', 'language', 'soft', 'other'].map(category => {
               const categorySkills = skills.filter(s => s.category === category)
               if (categorySkills.length === 0) return null
               
               return (
-                <div key={category} className="p-4 border" style={{ borderColor: `${colors.primary}30`, borderRadius: 'var(--radius-card)' }}>
-                  <h3 className="text-xs font-bold mb-3 tracking-widest capitalize" style={{ ...headingStyle, textTransform: 'uppercase' }}>
+                <div key={category} style={{ padding: '1rem', borderWidth: '1px', borderStyle: 'solid', borderColor: `${colors.primary}30`, borderRadius: 'var(--radius-card)' }}>
+                  <h3 style={{ ...headingStyle, fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
                     {category.replace('_', ' ')}
                   </h3>
-                  <p className="text-[var(--foreground)] leading-relaxed">
+                  <p style={{ color: 'var(--foreground)', lineHeight: '1.6' }}>
                     {categorySkills.map((skill, i) => (
-                      <span key={skill.id} className="block mb-1">
-                        {skill.name} <span className="font-normal opacity-60">({skill.proficiency})</span>
+                      <span key={skill.id} style={{ display: 'block', marginBottom: '0.25rem' }}>
+                        {skill.name} <span style={{ fontWeight: 'normal', opacity: 0.6 }}>({skill.proficiency})</span>
                       </span>
                     ))}
                   </p>
@@ -137,37 +182,31 @@ export function ExecutiveLeadership({ data, colors, isExport = false }: Executiv
           <h2 style={headingStyle2}>
             Leadership Experience
           </h2>
-          <div className="space-y-[var(--space-entry)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
             {experience.map((exp) => (
-              <div key={exp.id} className="border-l-4 pl-6" style={{ ...entryStyle, borderColor: colors.primary }}>
-                <div style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            gap: '1rem',
-            marginBottom: 'var(--space-item)',
-          }}>
+              <div key={exp.id} style={{ ...entryStyle, borderLeftWidth: '4px', borderLeftStyle: 'solid', borderLeftColor: colors.primary, paddingLeft: '1.5rem' }}>
+                <div style={{ ...flexRowBetweenGap1, marginBottom: 'var(--space-item)' }}>
                   <div>
-                    <h3 className="text-xl font-bold mb-1" style={headingStyle}>{exp.position}</h3>
-                    <p className="text-lg font-medium" style={{ color: colors.accent }}>{exp.company}</p>
-                    {exp.location && <p className="text-sm text-[var(--muted-foreground)]">{exp.location}</p>}
+                    <h3 style={{ ...headingStyle, fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>{exp.position}</h3>
+                    <p style={{ fontSize: '1.125rem', fontWeight: '500', color: colors.accent }}>{exp.company}</p>
+                    {exp.location && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{exp.location}</p>}
                   </div>
-                  <div className="text-right md:text-right self-center">
-                    <p className="text-sm font-semibold tracking-wide" style={{ ...headingStyle, textTransform: 'uppercase' }}>
+                  <div style={{ ...textRight, alignSelf: 'center' }}>
+                    <p style={{ fontSize: '0.875rem', fontWeight: '600', letterSpacing: '0.05em', color: colors.heading, textTransform: 'uppercase', textAlign: 'right' }}>
                       {getDateRange(exp.startDate, exp.endDate, exp.current)}
                     </p>
                   </div>
                 </div>
                 {exp.description.length > 0 && (
-                  <ul className="list-disc list-inside space-y-[var(--space-item)] text-[var(--foreground)] leading-relaxed ml-4">
+                  <ul style={{ listStyle: 'disc', paddingLeft: '2rem', display: 'flex', flexDirection: 'column', gap: 'var(--space-item)', color: 'var(--foreground)', lineHeight: '1.6' }}>
                     {exp.description.map((desc, i) => (
-                      <li key={i} className="relative pl-2">{desc}</li>
+                      <li key={i} style={{ position: 'relative', paddingLeft: '0.5rem' }}>{desc}</li>
                     ))}
                   </ul>
                 )}
                 {exp.technologies.length > 0 && (
-                  <p className="mt-[var(--space-item)] text-sm text-[var(--muted-foreground)]">
-                    <span className="font-medium tracking-wide" style={{ textTransform: 'uppercase' }}>Key Areas: </span>
+                  <p style={{ marginTop: 'var(--space-item)', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
+                    <span style={{ fontWeight: '500', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Key Areas: </span>
                     {exp.technologies.join(', ')}
                   </p>
                 )}
@@ -183,34 +222,29 @@ export function ExecutiveLeadership({ data, colors, isExport = false }: Executiv
           <h2 style={headingStyle2}>
             Education
           </h2>
-          <div className="space-y-[var(--space-entry)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
             {education.map((edu) => (
-              <div key={edu.id} className="p-4 border" style={{ ...entryStyle, borderColor: `${colors.primary}20`, borderRadius: 'var(--radius-card)' }}>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  gap: '1rem',
-                }}>
+              <div key={edu.id} style={{ ...entryStyle, padding: '1rem', borderWidth: '1px', borderStyle: 'solid', borderColor: `${colors.primary}20`, borderRadius: 'var(--radius-card)' }}>
+                <div style={flexRowBetweenGap1}>
                   <div>
-                    <p className="font-bold text-lg mb-1" style={headingStyle}>
+                    <p style={{ ...headingStyle, fontWeight: 'bold', fontSize: '1.125rem', marginBottom: '0.25rem' }}>
                       {edu.degree}{edu.field && ` in ${edu.field}`}
                     </p>
-                    <p className="font-medium" style={{ color: colors.accent }}>{edu.institution}</p>
-                    {edu.location && <p className="text-sm text-[var(--muted-foreground)]">{edu.location}</p>}
+                    <p style={{ fontWeight: '500', color: colors.accent }}>{edu.institution}</p>
+                    {edu.location && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{edu.location}</p>}
                     {edu.honors && edu.honors.length > 0 && (
-                      <p className="text-sm text-[var(--muted-foreground)] mt-1">
-                        <span className="font-medium">Honors: </span>{edu.honors.join(', ')}
+                      <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>
+                        <span style={{ fontWeight: '500' }}>Honors: </span>{edu.honors.join(', ')}
                       </p>
                     )}
                     {edu.gpa && (
-                      <p className="text-sm text-[var(--muted-foreground)]">
-                        <span className="font-medium">GPA: </span>{edu.gpa}
+                      <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
+                        <span style={{ fontWeight: '500' }}>GPA: </span>{edu.gpa}
                       </p>
                     )}
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold tracking-wide" style={{ ...headingStyle, textTransform: 'uppercase' }}>
+                  <div style={textRight}>
+                    <p style={{ fontSize: '0.875rem', fontWeight: '600', letterSpacing: '0.05em', color: colors.heading, textTransform: 'uppercase', textAlign: 'right' }}>
                       {getDateRange(edu.startDate, edu.endDate, edu.current)}
                     </p>
                   </div>
@@ -227,25 +261,23 @@ export function ExecutiveLeadership({ data, colors, isExport = false }: Executiv
           <h2 style={headingStyle2}>
             Board Roles & Certifications
           </h2>
-          <div className="space-y-[var(--space-item)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-item)' }}>
             {certifications.map((cert) => (
-              <div key={cert.id} className="p-4 border-l-4" style={{ ...entryStyle, borderColor: colors.accent, backgroundColor: `${colors.accent}05`, borderRadius: 'var(--radius-card)' }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-4">
-                  <div>
-                    <p className="font-bold" style={headingStyle}>{cert.name}</p>
-                    <p className="text-sm text-[var(--muted-foreground)]">{cert.issuer}</p>
-                    <p className="text-sm text-[var(--muted-foreground)] mt-1">
-                      {formatDate(cert.date)}
-                      {cert.expiryDate && ` – Expires: ${formatDate(cert.expiryDate)}`}
-                      {cert.credentialId && ` | ID: ${cert.credentialId}`}
-                    </p>
-                  </div>
-                  {cert.url && (
-                    <a href={cert.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium self-center" style={{ color: colors.accent, textDecoration: 'underline' }}>
-                      Verify Credential
-                    </a>
-                  )}
+              <div key={cert.id} style={{ ...certFlex, borderLeftColor: colors.accent, backgroundColor: `${colors.accent}05`, borderRadius: 'var(--radius-card)' }}>
+                <div>
+                  <p style={{ ...headingStyle, fontWeight: 'bold' }}>{cert.name}</p>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{cert.issuer}</p>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)', marginTop: '0.25rem' }}>
+                    {formatDate(cert.date)}
+                    {cert.expiryDate && ` – Expires: ${formatDate(cert.expiryDate)}`}
+                    {cert.credentialId && ` | ID: ${cert.credentialId}`}
+                  </p>
                 </div>
+                {cert.url && (
+                  <a href={cert.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.875rem', fontWeight: '500', color: colors.accent, textDecoration: 'underline' }}>
+                    Verify Credential
+                  </a>
+                )}
               </div>
             ))}
           </div>
@@ -258,10 +290,10 @@ export function ExecutiveLeadership({ data, colors, isExport = false }: Executiv
           <h2 style={headingStyle2}>
             Languages
           </h2>
-          <p className="text-[var(--foreground)]">
+          <p style={{ color: 'var(--foreground)', lineHeight: '1.6' }}>
             {languages.map((lang, i) => (
-              <span key={lang.id} className="block md:inline-block md:mr-6 mb-2 md:mb-0">
-                <span className="font-medium">{lang.name}</span> — {lang.proficiency}
+              <span key={lang.id} style={{ display: 'inline-block', marginRight: '1.5rem', marginBottom: '0.5rem' }}>
+                <span style={{ fontWeight: 500 }}>{lang.name}</span> — {lang.proficiency}
               </span>
             ))}
           </p>
@@ -274,13 +306,13 @@ export function ExecutiveLeadership({ data, colors, isExport = false }: Executiv
           <h2 style={headingStyle2}>
             {section.title.toUpperCase()}
           </h2>
-          <div className="space-y-[var(--space-entry)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
             {section.items.map((item) => (
-              <div key={item.id} className="pl-6 border-l-2" style={{ borderColor: colors.secondary }}>
-                <h3 className="font-bold mb-1" style={headingStyle}>{item.title}</h3>
-                {item.subtitle && <p className="text-sm" style={{ color: colors.accent }}>{item.subtitle}</p>}
-                {item.date && <p className="text-sm text-[var(--muted-foreground)]">{item.date}</p>}
-                {item.description && <p className="mt-2 text-[var(--foreground)] leading-relaxed">{item.description}</p>}
+              <div key={item.id} style={{ ...borderLeft2Style, borderLeftColor: colors.secondary }}>
+                <h3 style={{ ...headingStyle, fontWeight: 'bold', marginBottom: '0.25rem' }}>{item.title}</h3>
+                {item.subtitle && <p style={{ fontSize: '0.875rem', color: colors.accent }}>{item.subtitle}</p>}
+                {item.date && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{item.date}</p>}
+                {item.description && <p style={{ marginTop: '0.5rem', color: 'var(--foreground)', lineHeight: '1.6' }}>{item.description}</p>}
               </div>
             ))}
           </div>

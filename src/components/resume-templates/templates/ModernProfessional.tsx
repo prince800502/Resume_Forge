@@ -62,43 +62,115 @@ export function ModernProfessional({ data, colors, isExport = false }: ModernPro
     marginBottom: 'var(--space-item)',
   }
 
+  // Inline styles for layout-critical elements
+  const flexRowBetween = {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: '0.5rem',
+  } as React.CSSProperties
+
+  const flexRowBetweenGap1 = {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: '1rem',
+  } as React.CSSProperties
+
+  const flexWrapGap4 = {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '1rem',
+  } as React.CSSProperties
+
+  const flexWrapGap4TextSm = {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '1rem',
+    fontSize: '0.875rem',
+  } as React.CSSProperties
+
+  const textRight = {
+    textAlign: 'right' as const,
+  } as React.CSSProperties
+
+  const headerFlex = {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: '1rem',
+  } as React.CSSProperties
+
+  const certFlex = {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: '1rem',
+    padding: '0.75rem',
+    borderRadius: 'var(--radius-card)',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: colors.primary,
+  } as React.CSSProperties
+
+  const projectFlex = {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: '0.5rem',
+  } as React.CSSProperties
+
+  const skillsFlexWrap = {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '0.5rem',
+  } as React.CSSProperties
+
+  const techFlexWrap = {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '0.5rem',
+  } as React.CSSProperties
+
+  const langsFlexWrap = {
+    display: 'flex',
+    flexWrap: 'wrap' as const,
+    gap: '0.75rem',
+  } as React.CSSProperties
+
   return (
     <div className="modern-professional-template" style={style} data-template="modern-professional">
       {/* Header */}
-      <header className="mb-[var(--space-section)] pb-[var(--space-heading)] border-b-2" style={{ borderColor: colors.primary }}>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          gap: '1rem',
-        }}>
+      <header style={{ ...sectionStyle, paddingBottom: 'var(--space-heading)', borderBottomWidth: '2px', borderBottomStyle: 'solid', borderBottomColor: colors.primary }}>
+        <div style={headerFlex}>
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold mb-2" style={headingStyle}>
+            <h1 style={{ ...headingStyle, fontSize: 'clamp(1.875rem, 4vw, 2.25rem)', fontWeight: 'bold', marginBottom: '0.5rem' }}>
               {personal.firstName} {personal.lastName}
             </h1>
-            <p className="text-lg font-medium mb-2" style={accentStyle}>
+            <p style={{ fontSize: '1.125rem', fontWeight: '500', marginBottom: '0.5rem', ...accentStyle }}>
               {personal.title || 'Professional'}
             </p>
-            <div className="flex flex-wrap gap-4 text-sm text-[var(--muted-foreground)]">
+            <div style={flexWrapGap4TextSm}>
               {personal.email && <span>{personal.email}</span>}
               {personal.phone && <span>{personal.phone}</span>}
               {personal.location && <span>{personal.location}</span>}
               {personal.linkedin && (
                 <a href={personal.linkedin.startsWith('http') ? personal.linkedin : `https://${personal.linkedin}`} 
-                   target="_blank" rel="noopener noreferrer" className="underline hover:no-underline" style={accentStyle}>
+                   target="_blank" rel="noopener noreferrer" style={{ ...accentStyle, textDecoration: 'underline' }}>
                   LinkedIn
                 </a>
               )}
               {personal.github && (
                 <a href={personal.github.startsWith('http') ? personal.github : `https://${personal.github}`} 
-                   target="_blank" rel="noopener noreferrer" className="underline hover:no-underline" style={accentStyle}>
+                   target="_blank" rel="noopener noreferrer" style={{ ...accentStyle, textDecoration: 'underline' }}>
                   GitHub
                 </a>
               )}
               {personal.website && (
                 <a href={personal.website.startsWith('http') ? personal.website : `https://${personal.website}`} 
-                   target="_blank" rel="noopener noreferrer" className="underline hover:no-underline" style={accentStyle}>
+                   target="_blank" rel="noopener noreferrer" style={{ ...accentStyle, textDecoration: 'underline' }}>
                   Portfolio
                 </a>
               )}
@@ -110,52 +182,45 @@ export function ModernProfessional({ data, colors, isExport = false }: ModernPro
       {/* Professional Summary */}
       {summary && (
         <section style={sectionStyle} data-section="summary">
-          <h2 className="text-xl font-semibold" style={headingStyle2}>
+          <h2 style={{ ...headingStyle2, fontSize: '1.25rem', fontWeight: '600' }}>
             Professional Summary
           </h2>
-          <p className="text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">{summary}</p>
+          <p style={{ color: 'var(--foreground)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{summary}</p>
         </section>
       )}
 
       {/* Experience */}
       {experience.length > 0 && (
         <section style={sectionStyle} data-section="experience">
-          <h2 className="text-xl font-semibold" style={headingStyle2}>
+          <h2 style={{ ...headingStyle2, fontSize: '1.25rem', fontWeight: '600' }}>
             Professional Experience
           </h2>
-          <div className="space-y-[var(--space-entry)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
             {experience.map((exp, index) => (
-              <div key={exp.id} className="pl-4 border-l-2" style={{ ...entryStyle, borderColor: colors.primary }}>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  gap: '0.5rem',
-                  marginBottom: 'var(--space-tight)',
-                }}>
+              <div key={exp.id} style={{ ...entryStyle, paddingLeft: '1rem', borderLeftWidth: '2px', borderLeftStyle: 'solid', borderLeftColor: colors.primary }}>
+                <div style={{ ...flexRowBetween, marginBottom: 'var(--space-tight)' }}>
                   <div>
-                    <h3 className="text-lg font-semibold" style={{ color: colors.heading }}>{exp.position}</h3>
-                    <p className="text-[var(--foreground)]" style={{ color: colors.accent }}>{exp.company}</p>
-                    {exp.location && <p className="text-sm text-[var(--muted-foreground)]">{exp.location}</p>}
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: '600', color: colors.heading }}>{exp.position}</h3>
+                    <p style={{ color: colors.accent }}>{exp.company}</p>
+                    {exp.location && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{exp.location}</p>}
                   </div>
-                  <div className="text-right md:text-right">
-                    <p className="text-sm font-medium" style={accentStyle}>
+                  <div style={textRight}>
+                    <p style={{ fontSize: '0.875rem', fontWeight: '500', ...accentStyle }}>
                       {getDateRange(exp.startDate, exp.endDate, exp.current)}
                     </p>
                   </div>
                 </div>
                 {exp.description.length > 0 && (
-                  <ul className="list-disc list-inside space-y-[var(--space-item)] text-[var(--foreground)]">
+                  <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: 'var(--space-item)', color: 'var(--foreground)' }}>
                     {exp.description.map((desc, i) => (
-                      <li key={i} className="leading-relaxed">{desc}</li>
+                      <li key={i} style={{ lineHeight: '1.6' }}>{desc}</li>
                     ))}
                   </ul>
                 )}
                 {exp.technologies.length > 0 && (
-                  <div className="mt-[var(--space-item)] flex flex-wrap gap-2">
+                  <div style={{ ...techFlexWrap, marginTop: 'var(--space-item)' }}>
                     {exp.technologies.map((tech, i) => (
-                      <span key={i} className="px-2 py-1 text-xs rounded-full border" 
-                            style={{ borderColor: colors.primary, color: colors.primary }}>
+                      <span key={i} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderRadius: '9999px', borderWidth: '1px', borderStyle: 'solid', borderColor: colors.primary, color: colors.primary }}>
                         {tech}
                       </span>
                     ))}
@@ -170,31 +235,26 @@ export function ModernProfessional({ data, colors, isExport = false }: ModernPro
       {/* Education */}
       {education.length > 0 && (
         <section style={sectionStyle} data-section="education">
-          <h2 className="text-xl font-semibold" style={headingStyle2}>
+          <h2 style={{ ...headingStyle2, fontSize: '1.25rem', fontWeight: '600' }}>
             Education
           </h2>
-          <div className="space-y-[var(--space-entry)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
             {education.map((edu) => (
-              <div key={edu.id} className="pl-4 border-l-2" style={{ ...entryStyle, borderColor: colors.secondary }}>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  gap: '0.5rem',
-                }}>
+              <div key={edu.id} style={{ ...entryStyle, paddingLeft: '1rem', borderLeftWidth: '2px', borderLeftStyle: 'solid', borderLeftColor: colors.secondary }}>
+                <div style={flexRowBetween}>
                   <div>
-                    <h3 className="font-semibold" style={{ color: colors.heading }}>{edu.degree} in {edu.field}</h3>
-                    <p className="text-[var(--foreground)]">{edu.institution}</p>
-                    {edu.location && <p className="text-sm text-[var(--muted-foreground)]">{edu.location}</p>}
-                    {edu.gpa && <p className="text-sm text-[var(--muted-foreground)]">GPA: {edu.gpa}</p>}
+                    <h3 style={{ fontWeight: '600', color: colors.heading }}>{edu.degree} in {edu.field}</h3>
+                    <p style={{ color: 'var(--foreground)' }}>{edu.institution}</p>
+                    {edu.location && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{edu.location}</p>}
+                    {edu.gpa && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>GPA: {edu.gpa}</p>}
                     {edu.honors && edu.honors.length > 0 && (
-                      <p className="text-sm text-[var(--muted-foreground)]">
+                      <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
                         Honors: {edu.honors.join(', ')}
                       </p>
                     )}
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium" style={accentStyle}>
+                  <div style={textRight}>
+                    <p style={{ fontSize: '0.875rem', fontWeight: '500', ...accentStyle }}>
                       {getDateRange(edu.startDate, edu.endDate, edu.current)}
                     </p>
                   </div>
@@ -208,25 +268,24 @@ export function ModernProfessional({ data, colors, isExport = false }: ModernPro
       {/* Skills */}
       {skills.length > 0 && (
         <section style={sectionStyle} data-section="skills">
-          <h2 className="text-xl font-semibold" style={headingStyle2}>
+          <h2 style={{ ...headingStyle2, fontSize: '1.25rem', fontWeight: '600' }}>
             Skills
           </h2>
-          <div className="space-y-[var(--space-entry)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
             {['technical', 'framework', 'database', 'cloud', 'tool', 'language', 'soft', 'other'].map(category => {
               const categorySkills = skills.filter(s => s.category === category)
               if (categorySkills.length === 0) return null
               
               return (
                 <div key={category}>
-                  <h3 className="text-sm font-medium mb-[var(--space-tight)] capitalize" style={{ color: colors.heading }}>
+                  <h3 style={{ fontSize: '0.875rem', fontWeight: '500', marginBottom: 'var(--space-tight)', textTransform: 'capitalize', color: colors.heading }}>
                     {category.replace('_', ' ')}
                   </h3>
-                  <div className="flex flex-wrap gap-2">
+                  <div style={skillsFlexWrap}>
                     {categorySkills.map((skill) => (
-                      <span key={skill.id} className="px-3 py-1 text-sm rounded-full border" 
-                            style={{ borderColor: colors.primary, color: colors.primary }}>
+                      <span key={skill.id} style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem', borderRadius: '9999px', borderWidth: '1px', borderStyle: 'solid', borderColor: colors.primary, color: colors.primary }}>
                         {skill.name} 
-                        <span className="ml-1 text-xs opacity-70">({skill.proficiency})</span>
+                        <span style={{ marginLeft: '0.25rem', fontSize: '0.75rem', opacity: 0.7 }}>({skill.proficiency})</span>
                       </span>
                     ))}
                   </div>
@@ -240,33 +299,32 @@ export function ModernProfessional({ data, colors, isExport = false }: ModernPro
       {/* Projects */}
       {projects.length > 0 && (
         <section style={sectionStyle} data-section="projects">
-          <h2 className="text-xl font-semibold" style={headingStyle2}>
+          <h2 style={{ ...headingStyle2, fontSize: '1.25rem', fontWeight: '600' }}>
             Projects
           </h2>
-          <div className="space-y-[var(--space-entry)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
             {projects.map((project) => (
-              <div key={project.id} className="p-4 border" style={{ ...entryStyle, borderColor: colors.primary, borderRadius: 'var(--radius-card)' }}>
-                <div className="flex flex-col md:flex-row md:justify-between gap-2 mb-[var(--space-tight)]">
-                  <h3 className="font-semibold" style={{ color: colors.heading }}>{project.name}</h3>
+              <div key={project.id} style={{ ...entryStyle, padding: '1rem', borderWidth: '1px', borderStyle: 'solid', borderColor: colors.primary, borderRadius: 'var(--radius-card)' }}>
+                <div style={{ ...projectFlex, marginBottom: 'var(--space-tight)' }}>
+                  <h3 style={{ fontWeight: '600', color: colors.heading }}>{project.name}</h3>
                   {project.url && (
-                    <a href={project.url} target="_blank" rel="noopener noreferrer" className="text-sm" style={accentStyle}>
+                    <a href={project.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.875rem', ...accentStyle }}>
                       Live Demo
                     </a>
                   )}
                 </div>
-                <p className="text-[var(--foreground)] mb-[var(--space-item)]">{project.description}</p>
+                <p style={{ color: 'var(--foreground)', marginBottom: 'var(--space-item)' }}>{project.description}</p>
                 {project.technologies.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-[var(--space-item)]">
+                  <div style={{ ...techFlexWrap, marginBottom: 'var(--space-item)' }}>
                     {project.technologies.map((tech, i) => (
-                      <span key={i} className="px-2 py-1 text-xs rounded-full border" 
-                            style={{ borderColor: colors.secondary, color: colors.secondary }}>
+                      <span key={i} style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', borderRadius: '9999px', borderWidth: '1px', borderStyle: 'solid', borderColor: colors.secondary, color: colors.secondary }}>
                         {tech}
                       </span>
                     ))}
                   </div>
                 )}
                 {project.highlights.length > 0 && (
-                  <ul className="list-disc list-inside space-y-[var(--space-item)] text-sm text-[var(--foreground)]">
+                  <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: 'var(--space-item)', fontSize: '0.875rem', color: 'var(--foreground)' }}>
                     {project.highlights.map((highlight, i) => (
                       <li key={i}>{highlight}</li>
                     ))}
@@ -281,33 +339,23 @@ export function ModernProfessional({ data, colors, isExport = false }: ModernPro
       {/* Certifications */}
       {certifications.length > 0 && (
         <section style={sectionStyle} data-section="certifications">
-          <h2 className="text-xl font-semibold" style={headingStyle2}>
+          <h2 style={{ ...headingStyle2, fontSize: '1.25rem', fontWeight: '600' }}>
             Certifications
           </h2>
-          <div className="space-y-[var(--space-item)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-item)' }}>
             {certifications.map((cert) => (
-              <div key={cert.id} style={{
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: '1rem',
-                padding: '0.75rem',
-                borderRadius: 'var(--radius-card)',
-                border: '1px solid',
-                borderColor: colors.primary,
-              }}>
+              <div key={cert.id} style={certFlex}>
                 <div>
-                  <h3 className="font-semibold" style={{ color: colors.heading }}>{cert.name}</h3>
-                  <p className="text-sm text-[var(--muted-foreground)]">{cert.issuer}</p>
-                  <p className="text-sm text-[var(--muted-foreground)]">
+                  <h3 style={{ fontWeight: '600', color: colors.heading }}>{cert.name}</h3>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{cert.issuer}</p>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
                     {formatDate(cert.date)}
                     {cert.expiryDate && ` – Expires: ${formatDate(cert.expiryDate)}`}
                     {cert.credentialId && ` | Credential: ${cert.credentialId}`}
                   </p>
                 </div>
                 {cert.url && (
-                  <a href={cert.url} target="_blank" rel="noopener noreferrer" className="mt-2 md:mt-0 text-sm" style={accentStyle}>
+                  <a href={cert.url} target="_blank" rel="noopener noreferrer" style={{ marginTop: '0.5rem', display: 'inline-block', fontSize: '0.875rem', ...accentStyle }}>
                     Verify
                   </a>
                 )}
@@ -320,13 +368,12 @@ export function ModernProfessional({ data, colors, isExport = false }: ModernPro
       {/* Languages */}
       {languages.length > 0 && (
         <section style={sectionStyle} data-section="languages">
-          <h2 className="text-xl font-semibold" style={headingStyle2}>
+          <h2 style={{ ...headingStyle2, fontSize: '1.25rem', fontWeight: '600' }}>
             Languages
           </h2>
-          <div className="flex flex-wrap gap-3">
+          <div style={langsFlexWrap}>
             {languages.map((lang) => (
-              <span key={lang.id} className="px-3 py-1 text-sm rounded-full bg-[var(--muted)] border" 
-                    style={{ borderColor: colors.primary }}>
+              <span key={lang.id} style={{ padding: '0.25rem 0.75rem', fontSize: '0.875rem', borderRadius: '9999px', backgroundColor: 'var(--muted)', borderWidth: '1px', borderStyle: 'solid', borderColor: colors.primary }}>
                 {lang.name} ({lang.proficiency})
               </span>
             ))}
@@ -337,16 +384,16 @@ export function ModernProfessional({ data, colors, isExport = false }: ModernPro
       {/* Custom Sections */}
       {custom_sections.map((section) => (
         <section key={section.id} style={sectionStyle} data-section={`custom-${section.id}`}>
-          <h2 className="text-xl font-semibold" style={headingStyle2}>
+          <h2 style={{ ...headingStyle2, fontSize: '1.25rem', fontWeight: '600' }}>
             {section.title}
           </h2>
-          <div className="space-y-[var(--space-entry)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
             {section.items.map((item) => (
-              <div key={item.id} className="pl-4 border-l-2" style={{ borderColor: colors.secondary }}>
-                <h3 className="font-semibold" style={{ color: colors.heading }}>{item.title}</h3>
-                {item.subtitle && <p className="text-[var(--foreground)]" style={accentStyle}>{item.subtitle}</p>}
-                {item.date && <p className="text-sm text-[var(--muted-foreground)]">{item.date}</p>}
-                {item.description && <p className="text-[var(--foreground)] mt-[var(--space-tight)]">{item.description}</p>}
+              <div key={item.id} style={{ paddingLeft: '1rem', borderLeftWidth: '2px', borderLeftStyle: 'solid', borderLeftColor: colors.secondary }}>
+                <h3 style={{ fontWeight: '600', color: colors.heading }}>{item.title}</h3>
+                {item.subtitle && <p style={{ color: colors.accent }}>{item.subtitle}</p>}
+                {item.date && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{item.date}</p>}
+                {item.description && <p style={{ color: 'var(--foreground)', marginTop: 'var(--space-tight)' }}>{item.description}</p>}
               </div>
             ))}
           </div>

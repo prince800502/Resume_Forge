@@ -58,59 +58,93 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
     marginBottom: 'var(--space-entry)',
   }
 
+  // Inline styles for layout-critical elements
+  const headerFlex = {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+    gap: '1rem',
+  } as React.CSSProperties
+
+  const flexEndGapHalf = {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: '0.5rem',
+  } as React.CSSProperties
+
+  const flexRowBetween = {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: '0.5rem',
+  } as React.CSSProperties
+
+  const flexGap3 = {
+    display: 'flex',
+    gap: '0.75rem',
+  } as React.CSSProperties
+
+  const textRight = {
+    textAlign: 'right' as const,
+  } as React.CSSProperties
+
+  const certFlex = {
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: '0.5rem',
+    padding: '0.75rem',
+    borderColor: `${colors.primary}20`,
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderRadius: 'var(--radius-card)',
+  } as React.CSSProperties
+
+  const borderLeftStyle = {
+    paddingLeft: '1rem',
+    borderLeftWidth: '2px',
+    borderLeftStyle: 'solid' as const,
+    borderLeftColor: `${colors.primary}30`,
+  } as React.CSSProperties
+
   return (
     <div className="minimal-essentials-template" style={style} data-template="minimal-essentials">
       {/* Header - Clean and minimal */}
-      <header className="mb-[var(--space-section)] pb-[var(--space-heading)] border-b" style={{ borderColor: `${colors.primary}30` }}>
-        <div style={{
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'baseline',
-          justifyContent: 'space-between',
-          gap: '1rem',
-        }}>
+      <header style={{ ...sectionStyle, paddingBottom: 'var(--space-heading)', borderBottomWidth: '1px', borderBottomStyle: 'solid', borderBottomColor: `${colors.primary}30` }}>
+        <div style={headerFlex}>
           <div>
-            <h1 className="text-3xl md:text-4xl mb-1" style={headingStyle}>
+            <h1 style={{ ...headingStyle, fontSize: 'clamp(1.875rem, 4vw, 2.25rem)', marginBottom: '0.25rem' }}>
               {personal.firstName} {personal.lastName}
             </h1>
             {personal.title && (
-              <p className="text-lg font-normal" style={{ color: colors.accent }}>
+              <p style={{ fontSize: '1.125rem', fontWeight: 'normal', color: colors.accent }}>
                 {personal.title}
               </p>
             )}
           </div>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'flex-end',
-            gap: '0.5rem',
-          }}>
+          <div style={flexEndGapHalf}>
             {personal.email && <span>{personal.email}</span>}
             {personal.phone && <span>{personal.phone}</span>}
             {personal.location && <span>{personal.location}</span>}
           </div>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'row',
-            justifyContent: 'flex-end',
-            gap: '0.5rem',
-            marginTop: '0.5rem',
-          }}>
+          <div style={{ ...flexEndGapHalf, marginTop: '0.5rem' }}>
               {personal.linkedin && (
                 <a href={personal.linkedin.startsWith('http') ? personal.linkedin : `https://${personal.linkedin}`} 
-                   target="_blank" rel="noopener noreferrer" className="underline hover:no-underline" style={{ color: colors.accent }}>
+                   target="_blank" rel="noopener noreferrer" style={{ color: colors.accent, textDecoration: 'underline' }}>
                   LinkedIn
                 </a>
               )}
               {personal.github && (
                 <a href={personal.github.startsWith('http') ? personal.github : `https://${personal.github}`} 
-                   target="_blank" rel="noopener noreferrer" className="underline hover:no-underline" style={{ color: colors.accent }}>
+                   target="_blank" rel="noopener noreferrer" style={{ color: colors.accent, textDecoration: 'underline' }}>
                   GitHub
                 </a>
               )}
               {personal.website && (
                 <a href={personal.website.startsWith('http') ? personal.website : `https://${personal.website}`} 
-                   target="_blank" rel="noopener noreferrer" className="underline hover:no-underline" style={{ color: colors.accent }}>
+                   target="_blank" rel="noopener noreferrer" style={{ color: colors.accent, textDecoration: 'underline' }}>
                   Portfolio
                 </a>
               )}
@@ -124,7 +158,7 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
           <h2 style={headingStyle2}>
             Summary
           </h2>
-          <p className="text-[var(--foreground)] leading-relaxed whitespace-pre-wrap">{summary}</p>
+          <p style={{ color: 'var(--foreground)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>{summary}</p>
         </section>
       )}
 
@@ -134,36 +168,30 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
           <h2 style={headingStyle2}>
             Experience
           </h2>
-          <div className="space-y-[var(--space-entry)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-entry)' }}>
             {experience.map((exp) => (
               <div key={exp.id} style={entryStyle}>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  gap: '0.5rem',
-                  marginBottom: 'var(--space-tight)',
-                }}>
+                <div style={{ ...flexRowBetween, marginBottom: 'var(--space-tight)' }}>
                   <div>
-                    <h3 className="font-medium text-lg" style={headingStyle}>{exp.position}</h3>
+                    <h3 style={{ ...headingStyle, fontWeight: 500, fontSize: '1.125rem' }}>{exp.position}</h3>
                     <p style={{ color: colors.accent }}>{exp.company}</p>
-                    {exp.location && <p className="text-sm text-[var(--muted-foreground)]">{exp.location}</p>}
+                    {exp.location && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{exp.location}</p>}
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium" style={{ color: colors.accent }}>
+                  <div style={textRight}>
+                    <p style={{ fontSize: '0.875rem', fontWeight: 500, color: colors.accent }}>
                       {getDateRange(exp.startDate, exp.endDate, exp.current)}
                     </p>
                   </div>
                 </div>
                 {exp.description.length > 0 && (
-                  <ul className="list-disc list-inside space-y-[var(--space-item)] text-[var(--foreground)] leading-relaxed ml-4">
+                  <ul style={{ listStyle: 'disc', paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: 'var(--space-item)', color: 'var(--foreground)', lineHeight: '1.6' }}>
                     {exp.description.map((desc, i) => (
                       <li key={i}>{desc}</li>
                     ))}
                   </ul>
                 )}
                 {exp.technologies.length > 0 && (
-                  <p className="mt-[var(--space-item)] text-sm text-[var(--muted-foreground)]">
+                  <p style={{ marginTop: 'var(--space-item)', fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>
                     <span style={{ color: colors.primary }}>Stack:</span> {exp.technologies.join(', ')}
                   </p>
                 )}
@@ -179,24 +207,18 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
           <h2 style={headingStyle2}>
             Education
           </h2>
-          <div className="space-y-[var(--space-item)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-item)' }}>
             {education.map((edu) => (
-              <div key={edu.id} style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  gap: '0.5rem',
-                  marginBottom: 'var(--space-entry)',
-                }}>
+              <div key={edu.id} style={{ ...flexRowBetween, marginBottom: 'var(--space-entry)' }}>
                 <div>
-                  <p className="font-medium" style={headingStyle}>
+                  <p style={{ ...headingStyle, fontWeight: 500 }}>
                     {edu.degree}{edu.field && ` in ${edu.field}`}
                   </p>
                   <p>{edu.institution}</p>
-                  {edu.location && <p className="text-sm text-[var(--muted-foreground)]">{edu.location}</p>}
+                  {edu.location && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{edu.location}</p>}
                 </div>
-                <div className="text-right">
-                  <p className="text-sm" style={{ color: colors.accent }}>
+                <div style={textRight}>
+                  <p style={{ fontSize: '0.875rem', color: colors.accent }}>
                     {getDateRange(edu.startDate, edu.endDate, edu.current)}
                   </p>
                 </div>
@@ -212,7 +234,7 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
           <h2 style={headingStyle2}>
             Skills
           </h2>
-          <p className="text-[var(--foreground)]">
+          <p style={{ color: 'var(--foreground)', lineHeight: '1.6' }}>
             {skills.map((skill, i) => (
               <span key={skill.id}>
                 {skill.name} ({skill.proficiency}){i < skills.length - 1 ? '; ' : ''}
@@ -228,33 +250,27 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
           <h2 style={headingStyle2}>
             Projects
           </h2>
-          <div className="space-y-[var(--space-item)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-item)' }}>
             {projects.map((project) => (
               <div key={project.id} style={entryStyle}>
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  gap: '0.5rem',
-                  marginBottom: 'var(--space-tight)',
-                }}>
-                  <h3 className="font-medium" style={headingStyle}>{project.name}</h3>
-                  <div className="flex gap-3">
+                <div style={{ ...flexRowBetween, marginBottom: 'var(--space-tight)' }}>
+                  <h3 style={{ ...headingStyle, fontWeight: 500 }}>{project.name}</h3>
+                  <div style={flexGap3}>
                     {project.url && (
-                      <a href={project.url} target="_blank" rel="noopener noreferrer" className="text-sm underline hover:no-underline" style={{ color: colors.accent }}>
+                      <a href={project.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.875rem', color: colors.accent, textDecoration: 'underline' }}>
                         Live
                       </a>
                     )}
                     {project.github && (
-                      <a href={project.github} target="_blank" rel="noopener noreferrer" className="text-sm underline hover:no-underline" style={{ color: colors.accent }}>
+                      <a href={project.github} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.875rem', color: colors.accent, textDecoration: 'underline' }}>
                         Code
                       </a>
                     )}
                   </div>
                 </div>
-                <p className="text-[var(--foreground)] text-sm mb-[var(--space-tight)]">{project.description}</p>
+                <p style={{ color: 'var(--foreground)', fontSize: '0.875rem', marginBottom: 'var(--space-tight)' }}>{project.description}</p>
                 {project.technologies.length > 0 && (
-                  <p className="text-xs text-[var(--muted-foreground)]">
+                  <p style={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
                     {project.technologies.join(', ')}
                   </p>
                 )}
@@ -270,25 +286,15 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
           <h2 style={headingStyle2}>
             Certifications
           </h2>
-          <div className="space-y-[var(--space-tight)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-tight)' }}>
             {certifications.map((cert) => (
-              <div key={cert.id} style={{
-                display: 'flex',
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                gap: '0.5rem',
-                padding: '0.75rem',
-                borderColor: `${colors.primary}20`,
-                borderWidth: '1px',
-                borderStyle: 'solid',
-                borderRadius: 'var(--radius-card)',
-              }}>
+              <div key={cert.id} style={certFlex}>
                 <div>
-                  <p className="font-medium" style={headingStyle}>{cert.name}</p>
-                  <p className="text-sm text-[var(--muted-foreground)]">{cert.issuer} • {formatDate(cert.date)}</p>
+                  <p style={{ ...headingStyle, fontWeight: 500 }}>{cert.name}</p>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{cert.issuer} • {formatDate(cert.date)}</p>
                 </div>
                 {cert.url && (
-                  <a href={cert.url} target="_blank" rel="noopener noreferrer" className="text-sm underline hover:no-underline" style={{ color: colors.accent }}>
+                  <a href={cert.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.875rem', color: colors.accent, textDecoration: 'underline' }}>
                     Verify
                   </a>
                 )}
@@ -304,7 +310,7 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
           <h2 style={headingStyle2}>
             Languages
           </h2>
-          <p className="text-[var(--foreground)]">
+          <p style={{ color: 'var(--foreground)', lineHeight: '1.6' }}>
             {languages.map((lang, i) => (
               <span key={lang.id}>
                 {lang.name} ({lang.proficiency}){i < languages.length - 1 ? ', ' : ''}
@@ -320,13 +326,13 @@ export function MinimalEssentials({ data, colors, isExport = false }: MinimalEss
           <h2 style={headingStyle2}>
             {section.title}
           </h2>
-          <div className="space-y-[var(--space-item)]">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-item)' }}>
             {section.items.map((item) => (
-              <div key={item.id} className="pl-4 border-l" style={{ borderColor: `${colors.primary}30` }}>
-                <h3 className="font-medium" style={headingStyle}>{item.title}</h3>
-                {item.subtitle && <p className="text-sm" style={{ color: colors.accent }}>{item.subtitle}</p>}
-                {item.date && <p className="text-sm text-[var(--muted-foreground)]">{item.date}</p>}
-                {item.description && <p className="mt-1 text-[var(--foreground)]">{item.description}</p>}
+              <div key={item.id} style={borderLeftStyle}>
+                <h3 style={{ ...headingStyle, fontWeight: 500 }}>{item.title}</h3>
+                {item.subtitle && <p style={{ fontSize: '0.875rem', color: colors.accent }}>{item.subtitle}</p>}
+                {item.date && <p style={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>{item.date}</p>}
+                {item.description && <p style={{ marginTop: '0.25rem', color: 'var(--foreground)' }}>{item.description}</p>}
               </div>
             ))}
           </div>

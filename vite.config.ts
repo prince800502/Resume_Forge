@@ -10,7 +10,8 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    port: 5173,
+    host: '0.0.0.0',
     open: true,
   },
   build: {
@@ -28,4 +29,5 @@ export default defineConfig({
     exclude: ['canvg'],
     include: ['core-js'],
   },
+  appType: 'spa',
 })

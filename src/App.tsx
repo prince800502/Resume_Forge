@@ -8,6 +8,7 @@ import { ResumeBuilderPage } from '@/pages/ResumeBuilderPage'
 import { ATSCheckerPage } from '@/pages/ATSCheckerPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { ExportTestPage } from '@/pages/ExportTestPage'
+import { PreviewPage } from '@/pages/PreviewPage'
 import { useAuth } from '@/contexts/AuthContext'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -80,12 +81,7 @@ export default function App() {
         path="/preview/:id"
         element={
           <ProtectedRoute>
-            <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--background)' }}>
-              <div className="text-center p-8">
-                <h2 className="text-2xl font-bold mb-2">Resume Preview</h2>
-                <p className="text-[var(--muted-foreground)]">Coming soon - /preview/:id route</p>
-              </div>
-            </div>
+            <PreviewPage />
           </ProtectedRoute>
         }
       />
